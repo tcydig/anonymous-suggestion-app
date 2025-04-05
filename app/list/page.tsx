@@ -16,14 +16,18 @@ export default function ListPage() {
   const [categoryFilter, setCategoryFilter] = useState<string>("all")
   const [sortOrder, setSortOrder] = useState<string>("newest")
   const [isLoading, setIsLoading] = useState(true)
+  const [hasMore, setHasMore] = useState(false)
+  const [offset, setOffset] = useState(0)
 
   // Load posts
   useEffect(() => {
     const loadPosts = async () => {
       try {
-        const data = await fetchPosts(20)
+        const data = await fetchPosts(20, 0)
         setPosts(data.suggestions)
         setFilteredPosts(data.suggestions)
+        setHasMore(data.hasMore)
+        setOffset(20)
       } catch (error) {
         console.error("Failed to fetch posts:", error)
       } finally {
@@ -32,6 +36,17 @@ export default function ListPage() {
     }
     loadPosts()
   }, [])
+
+  const loadMorePosts = async () => {
+    try {
+      const data = await fetchPosts(20, offset)
+      setPosts(prevPosts => [...prevPosts, ...data.suggestions])
+      setHasMore(data.hasMore)
+      setOffset(prevOffset => prevOffset + 20)
+    } catch (error) {
+      console.error("Failed to fetch more posts:", error)
+    }
+  }
 
   // Apply filters and sorting
   useEffect(() => {
@@ -162,23 +177,35 @@ export default function ListPage() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredPosts.map((post, index) => (
-                <motion.div
-                  key={post.id}
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: index * 0.05, duration: 0.3 }}
-                >
-                  <PostItem 
-                    post={post} 
-                    onLike={handleLike} 
-                    onDelete={handleDelete} 
-                    onEdit={handleEdit}
-                  />
-                </motion.div>
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredPosts.map((post, index) => (
+                  <motion.div
+                    key={post.id}
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: index * 0.05, duration: 0.3 }}
+                  >
+                    <PostItem 
+                      post={post} 
+                      onLike={handleLike} 
+                      onDelete={handleDelete} 
+                      onEdit={handleEdit}
+                    />
+                  </motion.div>
+                ))}
+              </div>
+              {hasMore && (
+                <div className="flex justify-center mt-8">
+                  <button
+                    onClick={loadMorePosts}
+                    className="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full hover:opacity-90 transition-opacity"
+                  >
+                    もっと見る
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

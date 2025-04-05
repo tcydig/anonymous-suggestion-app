@@ -21,12 +21,13 @@ export async function GET(request: Request) {
       )
       .all(limit, offset) as Suggestion[];
 
-    // offset + limit + 1の位置にデータが存在するか確認
-    const nextPageExists = db
-      .prepare(
-        "SELECT 1 FROM suggestions ORDER BY created_at DESC LIMIT 1 OFFSET ?"
-      )
-      .get(offset + limit) as { "1": number } | null;
+    // 総件数を取得
+    const totalCount = db
+      .prepare("SELECT COUNT(*) as count FROM suggestions")
+      .get() as { count: number };
+
+    // 現在のoffset + limitが総件数より小さい場合は次のページが存在する
+    const hasMore = offset + limit < totalCount.count;
 
     return NextResponse.json({
       suggestions: suggestions.map((suggestion) => ({
@@ -36,7 +37,7 @@ export async function GET(request: Request) {
         likes: suggestion.likes,
         timestamp: suggestion.created_at,
       })),
-      hasMore: nextPageExists !== null,
+      hasMore,
     });
   } catch (error) {
     return NextResponse.json(
