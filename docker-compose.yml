@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "5124:3000"
+    volumes:
+      - ./dev.db:/app/dev.db
+    environment:
+      - NODE_ENV=production 
