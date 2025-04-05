@@ -7,70 +7,30 @@ import { motion } from "framer-motion"
 import PostItem from "@/components/post-item"
 import { Filter, SlidersHorizontal } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-
-// Post type definition (same as in app/page.tsx)
-type Post = {
-  id: string
-  content: string
-  timestamp: Date
-  likes: number
-  category: string
-}
+import { Post } from "@/lib/types"
+import { fetchPosts, updatePost, deletePost, likePost } from "@/lib/api/posts"
 
 export default function ListPage() {
   const [posts, setPosts] = useState<Post[]>([])
   const [filteredPosts, setFilteredPosts] = useState<Post[]>([])
   const [categoryFilter, setCategoryFilter] = useState<string>("all")
   const [sortOrder, setSortOrder] = useState<string>("newest")
+  const [isLoading, setIsLoading] = useState(true)
 
-  // Load sample data for demonstration
+  // Load posts
   useEffect(() => {
-    const samplePosts: Post[] = [
-      {
-        id: "1",
-        content: "受付の手続きをもっとデジタル化できたらいいなと思います。紙の書類が多すぎて大変です。",
-        timestamp: new Date(Date.now() - 3600000 * 2),
-        likes: 5,
-        category: "改善提案",
-      },
-      {
-        id: "2",
-        content: "今日の患者さんがとても優しくて、心が温かくなりました。こういう瞬間があるから頑張れる！",
-        timestamp: new Date(Date.now() - 3600000 * 5),
-        likes: 8,
-        category: "ぼやき",
-      },
-      {
-        id: "3",
-        content: "休憩室のコーヒーマシンが壊れています。誰か修理方法知っていますか？",
-        timestamp: new Date(Date.now() - 3600000 * 8),
-        likes: 2,
-        category: "質問",
-      },
-      {
-        id: "4",
-        content: "待合室に観葉植物を置いてはどうでしょうか？リラックス効果があると思います。",
-        timestamp: new Date(Date.now() - 3600000 * 12),
-        likes: 10,
-        category: "アイデア",
-      },
-      {
-        id: "5",
-        content: "今日の会議、もう少し効率的に進行できたらいいなと思いました。",
-        timestamp: new Date(Date.now() - 3600000 * 24),
-        likes: 3,
-        category: "ぼやき",
-      },
-      {
-        id: "6",
-        content: "新しい予約システムの使い方がわかりません。誰か教えてください。",
-        timestamp: new Date(Date.now() - 3600000 * 36),
-        likes: 1,
-        category: "質問",
-      },
-    ]
-    setPosts(samplePosts)
-    setFilteredPosts(samplePosts)
+    const loadPosts = async () => {
+      try {
+        const data = await fetchPosts()
+        setPosts(data)
+        setFilteredPosts(data)
+      } catch (error) {
+        console.error("Failed to fetch posts:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    loadPosts()
   }, [])
 
   // Apply filters and sorting
@@ -94,17 +54,34 @@ export default function ListPage() {
     setFilteredPosts(result)
   }, [categoryFilter, sortOrder, posts])
 
-  const handleLike = (id: string) => {
-    const updatedPosts = posts.map((post) => (post.id === id ? { ...post, likes: post.likes + 1 } : post))
-    setPosts(updatedPosts)
+  const handleLike = async (id: string) => {
+    try {
+      const updatedPost = await likePost(id)
+      const updatedPosts = posts.map((post) => (post.id === id ? updatedPost : post))
+      setPosts(updatedPosts)
+    } catch (error) {
+      console.error("Failed to like post:", error)
+    }
   }
 
-  const handleDelete = (id: string) => {
-    setPosts(posts.filter((post) => post.id !== id))
+  const handleDelete = async (id: string) => {
+    try {
+      await deletePost(id)
+      const updatedPosts = posts.filter((post) => post.id !== id)
+      setPosts(updatedPosts)
+    } catch (error) {
+      console.error("Failed to delete post:", error)
+    }
   }
 
-  const handleEdit = (id: string, newContent: string) => {
-    setPosts(posts.map((post) => (post.id === id ? { ...post, content: newContent } : post)))
+  const handleEdit = async (id: string, newContent: string) => {
+    try {
+      const updatedPost = await updatePost(id, newContent)
+      const updatedPosts = posts.map((post) => (post.id === id ? updatedPost : post))
+      setPosts(updatedPosts)
+    } catch (error) {
+      console.error("Failed to update post:", error)
+    }
   }
 
   return (
@@ -166,7 +143,16 @@ export default function ListPage() {
             <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 border-0">{filteredPosts.length}件</Badge>
           </div>
 
-          {filteredPosts.length === 0 ? (
+          {isLoading ? (
+            <Card className="border-dashed border-2 border-purple-200 bg-white/50 backdrop-blur-sm">
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-400" />
+                <p className="text-center text-gray-500 mt-4">
+                  投稿を読み込んでいます...
+                </p>
+              </CardContent>
+            </Card>
+          ) : filteredPosts.length === 0 ? (
             <Card className="border-dashed border-2 border-purple-200 bg-white/50 backdrop-blur-sm">
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <Filter className="h-12 w-12 text-purple-300 mb-4" />

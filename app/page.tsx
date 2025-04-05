@@ -1,7 +1,5 @@
 "use client"
 
-import type React from "react"
-
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -12,23 +10,8 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Badge } from "@/components/ui/badge"
 import confetti from "canvas-confetti"
 import Link from "next/link"
-
-// Post type definition
-type Post = {
-  id: string
-  content: string
-  timestamp: Date
-  likes: number
-  category: string
-}
-
-// Categories for posts
-const categories = [
-  { name: "改善提案", color: "bg-gradient-to-r from-blue-500 to-cyan-400" },
-  { name: "ぼやき", color: "bg-gradient-to-r from-orange-400 to-pink-500" },
-  { name: "質問", color: "bg-gradient-to-r from-purple-500 to-indigo-400" },
-  { name: "アイデア", color: "bg-gradient-to-r from-green-400 to-emerald-500" },
-]
+import { Post, categories } from "@/lib/types"
+import { fetchPosts, createPost, updatePost, deletePost, likePost } from "@/lib/api/posts"
 
 // Remove the reactions array
 // const reactions = ['👍', '❤️', '😂', '😮', '😢', '👏'];
@@ -39,68 +22,72 @@ export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState(categories[0].name)
   const [isInputFocused, setIsInputFocused] = useState(false)
   const [visiblePosts, setVisiblePosts] = useState(10)
+  const [isLoading, setIsLoading] = useState(true)
 
-  // Load sample data for demonstration
+  // Load posts
   useEffect(() => {
-    const samplePosts: Post[] = [
-      {
-        id: "1",
-        content: "受付の手続きをもっとデジタル化できたらいいなと思います。紙の書類が多すぎて大変です。",
-        timestamp: new Date(Date.now() - 3600000 * 2),
-        likes: 5,
-        category: "改善提案",
-      },
-      {
-        id: "2",
-        content: "今日の患者さんがとても優しくて、心が温かくなりました。こういう瞬間があるから頑張れる！",
-        timestamp: new Date(Date.now() - 3600000 * 5),
-        likes: 8,
-        category: "ぼやき",
-      },
-      {
-        id: "3",
-        content: "休憩室のコーヒーマシンが壊れています。誰か修理方法知っていますか？",
-        timestamp: new Date(Date.now() - 3600000 * 8),
-        likes: 2,
-        category: "質問",
-      },
-    ]
-    setPosts(samplePosts)
+    const loadPosts = async () => {
+      try {
+        const data = await fetchPosts()
+        setPosts(data)
+      } catch (error) {
+        console.error("Failed to fetch posts:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    loadPosts()
   }, [])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (input.trim()) {
-      const newPost: Post = {
-        id: Date.now().toString(),
-        content: input,
-        timestamp: new Date(),
-        likes: 0,
-        category: selectedCategory,
+      try {
+        const newPost = await createPost({
+          content: input,
+          category: selectedCategory,
+        })
+
+        setPosts([newPost, ...posts])
+        setInput("")
+
+        // Trigger confetti effect when posting
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 },
+        })
+      } catch (error) {
+        console.error("Failed to create post:", error)
       }
-
-      setPosts([newPost, ...posts])
-      setInput("")
-
-      // Trigger confetti effect when posting
-      confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 },
-      })
     }
   }
 
-  const handleLike = (id: string) => {
-    setPosts(posts.map((post) => (post.id === id ? { ...post, likes: post.likes + 1 } : post)))
+  const handleLike = async (id: string) => {
+    try {
+      const updatedPost = await likePost(id)
+      setPosts(posts.map((post) => (post.id === id ? updatedPost : post)))
+    } catch (error) {
+      console.error("Failed to like post:", error)
+    }
   }
 
-  const handleDelete = (id: string) => {
-    setPosts(posts.filter((post) => post.id !== id))
+  const handleDelete = async (id: string) => {
+    try {
+      await deletePost(id)
+      setPosts(posts.filter((post) => post.id !== id))
+    } catch (error) {
+      console.error("Failed to delete post:", error)
+    }
   }
 
-  const handleEdit = (id: string, newContent: string) => {
-    setPosts(posts.map((post) => (post.id === id ? { ...post, content: newContent } : post)))
+  const handleEdit = async (id: string, newContent: string) => {
+    try {
+      const updatedPost = await updatePost(id, newContent)
+      setPosts(posts.map((post) => (post.id === id ? updatedPost : post)))
+    } catch (error) {
+      console.error("Failed to update post:", error)
+    }
   }
 
   // Remove the handleReaction function
@@ -232,7 +219,18 @@ export default function Home() {
           </div>
 
           <AnimatePresence>
-            {posts.length === 0 ? (
+            {isLoading ? (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                <Card className="border-dashed border-2 border-purple-200 bg-white/50 backdrop-blur-sm">
+                  <CardContent className="flex flex-col items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-400" />
+                    <p className="text-center text-gray-500 mt-4">
+                      投稿を読み込んでいます...
+                    </p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ) : posts.length === 0 ? (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                 <Card className="border-dashed border-2 border-purple-200 bg-white/50 backdrop-blur-sm">
                   <CardContent className="flex flex-col items-center justify-center py-12">
