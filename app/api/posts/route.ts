@@ -21,7 +21,7 @@ export async function GET() {
         content: suggestion.content,
         category: suggestion.category,
         likes: suggestion.likes,
-        timestamp: new Date(suggestion.created_at).toISOString(),
+        timestamp: suggestion.created_at,
       }))
     );
   } catch (error) {
@@ -47,12 +47,16 @@ export async function POST(request: Request) {
       .prepare("INSERT INTO suggestions (content, category) VALUES (?, ?)")
       .run(content, category || "改善提案");
 
+    const newPost = db
+      .prepare("SELECT * FROM suggestions WHERE id = ?")
+      .get(result.lastInsertRowid) as Suggestion;
+
     return NextResponse.json({
-      id: result.lastInsertRowid.toString(),
-      content,
-      category: category || "改善提案",
-      likes: 0,
-      timestamp: new Date().toISOString(),
+      id: newPost.id.toString(),
+      content: newPost.content,
+      category: newPost.category,
+      likes: newPost.likes,
+      timestamp: newPost.created_at,
     });
   } catch (error) {
     return NextResponse.json(
@@ -91,7 +95,7 @@ export async function PUT(request: Request) {
       content: result.content,
       category: result.category,
       likes: result.likes,
-      timestamp: new Date(result.created_at).toISOString(),
+      timestamp: result.created_at,
     });
   } catch (error) {
     return NextResponse.json(
