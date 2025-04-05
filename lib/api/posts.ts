@@ -60,7 +60,10 @@ const mockPosts: Post[] = [
 ];
 
 // Fetch all posts
-export async function fetchPosts(): Promise<Post[]> {
+export async function fetchPosts(): Promise<{
+  suggestions: Post[];
+  hasMore: boolean;
+}> {
   const response = await fetch("/api/posts");
   if (!response.ok) {
     throw new Error("投稿の取得に失敗しました");

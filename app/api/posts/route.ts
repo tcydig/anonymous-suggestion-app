@@ -9,21 +9,30 @@ interface Suggestion {
   created_at: string;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const suggestions = db
-      .prepare("SELECT * FROM suggestions ORDER BY created_at DESC")
-      .all() as Suggestion[];
+    const { searchParams } = new URL(request.url);
+    const limit = parseInt(searchParams.get("limit") || "10", 10);
 
-    return NextResponse.json(
-      suggestions.map((suggestion) => ({
+    // 全件数を取得
+    const totalCount = db
+      .prepare("SELECT COUNT(*) as count FROM suggestions")
+      .get() as { count: number };
+
+    const suggestions = db
+      .prepare("SELECT * FROM suggestions ORDER BY created_at DESC LIMIT ?")
+      .all(limit) as Suggestion[];
+
+    return NextResponse.json({
+      suggestions: suggestions.map((suggestion) => ({
         id: suggestion.id.toString(),
         content: suggestion.content,
         category: suggestion.category,
         likes: suggestion.likes,
         timestamp: suggestion.created_at,
-      }))
-    );
+      })),
+      hasMore: totalCount.count > limit,
+    });
   } catch (error) {
     return NextResponse.json(
       { error: "データの取得に失敗しました" },

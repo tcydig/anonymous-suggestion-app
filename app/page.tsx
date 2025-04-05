@@ -18,6 +18,7 @@ import { fetchPosts, createPost, updatePost, deletePost, likePost } from "@/lib/
 
 export default function Home() {
   const [posts, setPosts] = useState<Post[]>([])
+  const [hasMore, setHasMore] = useState(false)
   const [input, setInput] = useState("")
   const [selectedCategory, setSelectedCategory] = useState(categories[0].name)
   const [isInputFocused, setIsInputFocused] = useState(false)
@@ -29,7 +30,8 @@ export default function Home() {
     const loadPosts = async () => {
       try {
         const data = await fetchPosts()
-        setPosts(data)
+        setPosts(data.suggestions)
+        setHasMore(data.hasMore)
       } catch (error) {
         console.error("Failed to fetch posts:", error)
       } finally {
@@ -262,7 +264,7 @@ export default function Home() {
                   ))}
                 </div>
                 
-                {hasMorePosts && (
+                {hasMore && (
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}

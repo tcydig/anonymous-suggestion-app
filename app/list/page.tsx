@@ -22,8 +22,8 @@ export default function ListPage() {
     const loadPosts = async () => {
       try {
         const data = await fetchPosts()
-        setPosts(data)
-        setFilteredPosts(data)
+        setPosts(data.suggestions)
+        setFilteredPosts(data.suggestions)
       } catch (error) {
         console.error("Failed to fetch posts:", error)
       } finally {
@@ -44,9 +44,9 @@ export default function ListPage() {
 
     // Apply sorting
     if (sortOrder === "newest") {
-      result.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+      result.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
     } else if (sortOrder === "oldest") {
-      result.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime())
+      result.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
     } else if (sortOrder === "most-liked") {
       result.sort((a, b) => b.likes - a.likes)
     }
