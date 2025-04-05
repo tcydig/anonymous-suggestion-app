@@ -93,6 +93,14 @@ export default function Home() {
     setPosts(posts.map((post) => (post.id === id ? { ...post, likes: post.likes + 1 } : post)))
   }
 
+  const handleDelete = (id: string) => {
+    setPosts(posts.filter((post) => post.id !== id))
+  }
+
+  const handleEdit = (id: string, newContent: string) => {
+    setPosts(posts.map((post) => (post.id === id ? { ...post, content: newContent } : post)))
+  }
+
   // Remove the handleReaction function
   // const handleReaction = (id: string, emoji: string) => {
   //   setPosts(
@@ -234,7 +242,7 @@ export default function Home() {
                   exit={{ y: -20, opacity: 0 }}
                   transition={{ delay: index * 0.05, duration: 0.3 }}
                 >
-                  <PostItem post={post} onLike={handleLike} />
+                  <PostItem post={post} onLike={handleLike} onDelete={handleDelete} onEdit={handleEdit} />
                 </motion.div>
               ))
             )}
