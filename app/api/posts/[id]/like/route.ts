@@ -40,7 +40,7 @@ export async function POST(
       content: result.content,
       category: result.category,
       likes: result.likes,
-      timestamp: post.created_at,
+      timestamp: post.created_at, // UTCのまま返す
     };
 
     return NextResponse.json(response);

@@ -36,6 +36,14 @@ interface PostItemProps {
   onEdit: (id: string, newContent: string) => void
 }
 
+// UTCからJSTへの変換関数
+const utcToJst = (utcDate: string) => {
+  const date = new Date(utcDate);
+  // JSTはUTC+9時間
+  date.setHours(date.getHours() + 9);
+  return date;
+};
+
 // Helper function to get gradient based on category
 const getCategoryGradient = (category: string) => {
   switch (category) {
@@ -142,7 +150,7 @@ export default function PostItem({ post, onLike, onDelete, onEdit }: PostItemPro
 
         <CardFooter className="flex justify-between items-center border-t border-purple-100 py-3 bg-gradient-to-r from-purple-50/50 to-pink-50/50">
           <span className="text-sm text-gray-500">
-            {formatDistanceToNow(parseISO(post.timestamp), { addSuffix: true, locale: ja })}
+            {formatDistanceToNow(utcToJst(post.timestamp), { addSuffix: true, locale: ja })}
           </span>
 
           <div className="flex items-center gap-3">
