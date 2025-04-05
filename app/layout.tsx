@@ -31,6 +31,7 @@ export default function RootLayout({
             <SideMenu />
             <div className="flex-1 lg:ml-64">{children}</div>
           </div>
+          <div className="bunny-decoration" aria-hidden="true" />
         </ThemeProvider>
       </body>
     </html>
