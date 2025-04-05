@@ -62,6 +62,7 @@ export default function Home() {
 
         setPosts([newPost, ...posts])
         setInput("")
+        setTotalPosts(prev => prev + 1)
 
         // Trigger confetti effect when posting
         confetti({
@@ -79,6 +80,7 @@ export default function Home() {
     try {
       const updatedPost = await likePost(id)
       setPosts(posts.map((post) => (post.id === id ? updatedPost : post)))
+      setTotalLikes(prev => prev + 1)
     } catch (error) {
       console.error("Failed to like post:", error)
     }
