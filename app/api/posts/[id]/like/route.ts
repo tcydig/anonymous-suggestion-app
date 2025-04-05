@@ -14,11 +14,12 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
+    const id = await Promise.resolve(params.id);
     const result = db
       .prepare(
         "UPDATE suggestions SET likes = likes + 1 WHERE id = ? RETURNING *"
       )
-      .get(parseInt(params.id)) as Suggestion;
+      .get(parseInt(id)) as Suggestion;
 
     if (!result) {
       return NextResponse.json(
