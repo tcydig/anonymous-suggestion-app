@@ -21,7 +21,7 @@ export default function ListPage() {
   useEffect(() => {
     const loadPosts = async () => {
       try {
-        const data = await fetchPosts()
+        const data = await fetchPosts(20)
         setPosts(data.suggestions)
         setFilteredPosts(data.suggestions)
       } catch (error) {
