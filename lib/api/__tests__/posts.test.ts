@@ -16,15 +16,18 @@ describe("Posts API", () => {
 
   describe("fetchPosts", () => {
     it("should fetch posts successfully", async () => {
-      const mockPosts = [
-        {
-          id: "1",
-          content: "テスト投稿",
-          timestamp: "2024-04-05T00:00:00Z",
-          likes: 0,
-          category: "提案",
-        },
-      ];
+      const mockPosts = {
+        suggestions: [
+          {
+            id: "1",
+            content: "テスト投稿",
+            timestamp: "2024-04-05T00:00:00Z",
+            likes: 0,
+            category: "提案",
+          },
+        ],
+        hasMore: false,
+      };
 
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
@@ -34,6 +37,32 @@ describe("Posts API", () => {
       const posts = await fetchPosts();
       expect(posts).toEqual(mockPosts);
       expect(global.fetch).toHaveBeenCalledWith("/api/posts");
+    });
+
+    it("should fetch posts with limit and offset", async () => {
+      const mockPosts = {
+        suggestions: [
+          {
+            id: "1",
+            content: "テスト投稿",
+            timestamp: "2024-04-05T00:00:00Z",
+            likes: 0,
+            category: "提案",
+          },
+        ],
+        hasMore: true,
+      };
+
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockPosts),
+      });
+
+      const posts = await fetchPosts(10, 20);
+      expect(posts).toEqual(mockPosts);
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/posts?limit=10&offset=20"
+      );
     });
 
     it("should throw an error when fetch fails", async () => {

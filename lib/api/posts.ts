@@ -60,11 +60,18 @@ const mockPosts: Post[] = [
 ];
 
 // Fetch all posts
-export async function fetchPosts(limit?: number): Promise<{
+export async function fetchPosts(
+  limit?: number,
+  offset?: number
+): Promise<{
   suggestions: Post[];
   hasMore: boolean;
 }> {
-  const url = limit ? `/api/posts?limit=${limit}` : "/api/posts";
+  const params = new URLSearchParams();
+  if (limit) params.append("limit", limit.toString());
+  if (offset) params.append("offset", offset.toString());
+
+  const url = `/api/posts${params.toString() ? `?${params.toString()}` : ""}`;
   const response = await fetch(url);
   if (!response.ok) {
     throw new Error("投稿の取得に失敗しました");

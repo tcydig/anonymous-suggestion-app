@@ -13,6 +13,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get("limit") || "10", 10);
+    const offset = parseInt(searchParams.get("offset") || "0", 10);
 
     // 全件数を取得
     const totalCount = db
@@ -20,8 +21,17 @@ export async function GET(request: Request) {
       .get() as { count: number };
 
     const suggestions = db
-      .prepare("SELECT * FROM suggestions ORDER BY created_at DESC LIMIT ?")
-      .all(limit) as Suggestion[];
+      .prepare(
+        "SELECT * FROM suggestions ORDER BY created_at DESC LIMIT ? OFFSET ?"
+      )
+      .all(limit, offset) as Suggestion[];
+
+    // offset + limit + 1の位置にデータが存在するか確認
+    const nextPageExists = db
+      .prepare(
+        "SELECT 1 FROM suggestions ORDER BY created_at DESC LIMIT 1 OFFSET ?"
+      )
+      .get(offset + limit) as { "1": number } | null;
 
     return NextResponse.json({
       suggestions: suggestions.map((suggestion) => ({
@@ -31,7 +41,7 @@ export async function GET(request: Request) {
         likes: suggestion.likes,
         timestamp: suggestion.created_at,
       })),
-      hasMore: totalCount.count > limit,
+      hasMore: nextPageExists !== null,
     });
   } catch (error) {
     return NextResponse.json(
