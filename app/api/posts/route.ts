@@ -15,11 +15,6 @@ export async function GET(request: Request) {
     const limit = parseInt(searchParams.get("limit") || "10", 10);
     const offset = parseInt(searchParams.get("offset") || "0", 10);
 
-    // 全件数を取得
-    const totalCount = db
-      .prepare("SELECT COUNT(*) as count FROM suggestions")
-      .get() as { count: number };
-
     const suggestions = db
       .prepare(
         "SELECT * FROM suggestions ORDER BY created_at DESC LIMIT ? OFFSET ?"
