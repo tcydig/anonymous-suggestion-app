@@ -15,7 +15,7 @@ const mockPosts: Post[] = [
     id: "1",
     content:
       "受付の手続きをもっとデジタル化できたらいいなと思います。紙の書類が多すぎて大変です。",
-    timestamp: new Date(Date.now() - 3600000 * 2),
+    timestamp: new Date(Date.now() - 3600000 * 2).toISOString(),
     likes: 5,
     category: "改善提案",
   },
@@ -23,7 +23,7 @@ const mockPosts: Post[] = [
     id: "2",
     content:
       "今日の患者さんがとても優しくて、心が温かくなりました。こういう瞬間があるから頑張れる！",
-    timestamp: new Date(Date.now() - 3600000 * 5),
+    timestamp: new Date(Date.now() - 3600000 * 5).toISOString(),
     likes: 8,
     category: "ぼやき",
   },
@@ -31,7 +31,7 @@ const mockPosts: Post[] = [
     id: "3",
     content:
       "休憩室のコーヒーマシンが壊れています。誰か修理方法知っていますか？",
-    timestamp: new Date(Date.now() - 3600000 * 8),
+    timestamp: new Date(Date.now() - 3600000 * 8).toISOString(),
     likes: 2,
     category: "質問",
   },
@@ -39,21 +39,21 @@ const mockPosts: Post[] = [
     id: "4",
     content:
       "待合室に観葉植物を置いてはどうでしょうか？リラックス効果があると思います。",
-    timestamp: new Date(Date.now() - 3600000 * 12),
+    timestamp: new Date(Date.now() - 3600000 * 12).toISOString(),
     likes: 10,
     category: "アイデア",
   },
   {
     id: "5",
     content: "今日の会議、もう少し効率的に進行できたらいいなと思いました。",
-    timestamp: new Date(Date.now() - 3600000 * 24),
+    timestamp: new Date(Date.now() - 3600000 * 24).toISOString(),
     likes: 3,
     category: "ぼやき",
   },
   {
     id: "6",
     content: "新しい予約システムの使い方がわかりません。誰か教えてください。",
-    timestamp: new Date(Date.now() - 3600000 * 36),
+    timestamp: new Date(Date.now() - 3600000 * 36).toISOString(),
     likes: 1,
     category: "質問",
   },
