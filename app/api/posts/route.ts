@@ -100,3 +100,29 @@ export async function PUT(request: Request) {
     );
   }
 }
+
+export async function DELETE(request: Request) {
+  try {
+    const { id } = await request.json();
+
+    if (!id) {
+      return NextResponse.json({ error: "IDは必須です" }, { status: 400 });
+    }
+
+    const result = db.prepare("DELETE FROM suggestions WHERE id = ?").run(id);
+
+    if (result.changes === 0) {
+      return NextResponse.json(
+        { error: "投稿が見つかりません" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    return NextResponse.json(
+      { error: "投稿の削除に失敗しました" },
+      { status: 500 }
+    );
+  }
+}

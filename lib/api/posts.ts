@@ -108,9 +108,17 @@ export async function updatePost(id: string, content: string): Promise<Post> {
 
 // Delete a post
 export async function deletePost(id: string): Promise<void> {
-  // In a real application, this would be an API call
-  await new Promise((resolve) => setTimeout(resolve, 300));
-  // Here we would actually delete the post
+  const response = await fetch("/api/posts", {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ id }),
+  });
+
+  if (!response.ok) {
+    throw new Error("投稿の削除に失敗しました");
+  }
 }
 
 // Like a post
