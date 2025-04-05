@@ -6,11 +6,12 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
-import { Sparkles, MessageCircle } from "lucide-react"
+import { Sparkles, MessageCircle, ArrowRight } from "lucide-react"
 import PostItem from "@/components/post-item"
 import { motion, AnimatePresence } from "framer-motion"
 import { Badge } from "@/components/ui/badge"
 import confetti from "canvas-confetti"
+import Link from "next/link"
 
 // Post type definition
 type Post = {
@@ -264,13 +265,15 @@ export default function Home() {
                     animate={{ opacity: 1 }}
                     className="flex justify-center mt-8"
                   >
-                    <Button
-                      onClick={handleLoadMore}
-                      variant="outline"
-                      className="border-purple-200 hover:border-purple-300 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
-                    >
-                      さらに見る
-                    </Button>
+                    <Link href="/list">
+                      <Button
+                        variant="outline"
+                        className="border-purple-200 hover:border-purple-300 text-purple-600 hover:text-purple-700 hover:bg-purple-50 group"
+                      >
+                        さらに見る
+                        <ArrowRight className="ml-2 h-4 w-4 transform transition-transform group-hover:translate-x-1" />
+                      </Button>
+                    </Link>
                   </motion.div>
                 )}
               </>
