@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { motion } from "framer-motion"
 import PostItem from "@/components/post-item"
-import { Filter, SlidersHorizontal } from "lucide-react"
+import { Filter, SlidersHorizontal, RefreshCw } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Post } from "@/lib/types"
 import { fetchPosts, updatePost, deletePost, likePost } from "@/lib/api/posts"
@@ -18,22 +18,26 @@ export default function ListPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [hasMore, setHasMore] = useState(false)
   const [offset, setOffset] = useState(0)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   // Load posts
-  useEffect(() => {
-    const loadPosts = async () => {
-      try {
-        const data = await fetchPosts(20, 0)
-        setPosts(data.suggestions)
-        setFilteredPosts(data.suggestions)
-        setHasMore(data.hasMore)
-        setOffset(20)
-      } catch (error) {
-        console.error("Failed to fetch posts:", error)
-      } finally {
-        setIsLoading(false)
-      }
+  const loadPosts = async () => {
+    try {
+      setIsRefreshing(true)
+      const data = await fetchPosts(20, 0)
+      setPosts(data.suggestions)
+      setFilteredPosts(data.suggestions)
+      setHasMore(data.hasMore)
+      setOffset(20)
+    } catch (error) {
+      console.error("投稿の読み込みに失敗しました:", error)
+    } finally {
+      setIsRefreshing(false)
+      setIsLoading(false)
     }
+  }
+
+  useEffect(() => {
     loadPosts()
   }, [])
 
@@ -155,7 +159,16 @@ export default function ListPage() {
         <div className="space-y-6">
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-semibold text-purple-800">投稿一覧</h2>
-            <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 border-0">{filteredPosts.length}件</Badge>
+            <div className="flex items-center gap-2">
+              <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 border-0">{filteredPosts.length}件</Badge>
+              <button
+                onClick={loadPosts}
+                disabled={isRefreshing}
+                className="p-2 text-purple-600 hover:text-purple-700 transition-colors disabled:opacity-50"
+              >
+                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              </button>
+            </div>
           </div>
 
           {isLoading ? (

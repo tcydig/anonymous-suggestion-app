@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
-import { Sparkles, MessageCircle, ArrowRight } from "lucide-react"
+import { Sparkles, MessageCircle, ArrowRight, RefreshCw } from "lucide-react"
 import PostItem from "@/components/post-item"
 import { motion, AnimatePresence } from "framer-motion"
 import { Badge } from "@/components/ui/badge"
@@ -26,24 +26,28 @@ export default function Home() {
   const [isInputFocused, setIsInputFocused] = useState(false)
   const [visiblePosts, setVisiblePosts] = useState(10)
   const [isLoading, setIsLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   // Load posts
-  useEffect(() => {
-    const loadPosts = async () => {
-      try {
-        const data = await fetchPosts(10, 0)
-        setPosts(data.suggestions)
-        const count = await getPostCount()
-        setTotalPosts(count)
-        const likes = await getLikeCount()
-        setTotalLikes(likes)
-        setHasMore(data.hasMore)
-      } catch (error) {
-        console.error("投稿の読み込みに失敗しました:", error)
-      } finally {
-        setIsLoading(false)
-      }
+  const loadPosts = async () => {
+    try {
+      setIsRefreshing(true)
+      const data = await fetchPosts(10, 0)
+      setPosts(data.suggestions)
+      const count = await getPostCount()
+      setTotalPosts(count)
+      const likes = await getLikeCount()
+      setTotalLikes(likes)
+      setHasMore(data.hasMore)
+    } catch (error) {
+      console.error("投稿の読み込みに失敗しました:", error)
+    } finally {
+      setIsRefreshing(false)
+      setIsLoading(false)
     }
+  }
+
+  useEffect(() => {
     loadPosts()
   }, [])
 
@@ -223,7 +227,16 @@ export default function Home() {
         <div className="space-y-4">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold text-purple-800">みんなのつぶやき</h2>
-            <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 border-0">新着 {posts.length}件</Badge>
+            <div className="flex items-center gap-2">
+              <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 border-0">新着 {posts.length}件</Badge>
+              <button
+                onClick={loadPosts}
+                disabled={isRefreshing}
+                className="p-2 text-purple-600 hover:text-purple-700 transition-colors disabled:opacity-50"
+              >
+                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              </button>
+            </div>
           </div>
 
           <AnimatePresence>
