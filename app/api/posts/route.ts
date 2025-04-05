@@ -61,3 +61,42 @@ export async function POST(request: Request) {
     );
   }
 }
+
+export async function PUT(request: Request) {
+  try {
+    const { id, content, category } = await request.json();
+
+    if (!id || !content) {
+      return NextResponse.json(
+        { error: "IDと投稿内容は必須です" },
+        { status: 400 }
+      );
+    }
+
+    const result = db
+      .prepare(
+        "UPDATE suggestions SET content = ?, category = ? WHERE id = ? RETURNING *"
+      )
+      .get(content, category || "提案", id) as Suggestion;
+
+    if (!result) {
+      return NextResponse.json(
+        { error: "投稿が見つかりません" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({
+      id: result.id.toString(),
+      content: result.content,
+      category: result.category,
+      likes: result.likes,
+      timestamp: new Date(result.created_at).toISOString(),
+    });
+  } catch (error) {
+    return NextResponse.json(
+      { error: "投稿の更新に失敗しました" },
+      { status: 500 }
+    );
+  }
+}

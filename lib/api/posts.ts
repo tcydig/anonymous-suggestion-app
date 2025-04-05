@@ -92,13 +92,18 @@ export async function createPost({
 
 // Update a post
 export async function updatePost(id: string, content: string): Promise<Post> {
-  // In a real application, this would be an API call
-  await new Promise((resolve) => setTimeout(resolve, 300));
-  const post = mockPosts.find((p) => p.id === id);
-  if (!post) {
-    throw new Error("Post not found");
+  const response = await fetch("/api/posts", {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ id, content }),
+  });
+
+  if (!response.ok) {
+    throw new Error("投稿の更新に失敗しました");
   }
-  return { ...post, content };
+  return response.json();
 }
 
 // Delete a post

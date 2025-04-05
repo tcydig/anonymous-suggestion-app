@@ -252,7 +252,12 @@ export default function Home() {
                       exit={{ y: -20, opacity: 0 }}
                       transition={{ delay: index * 0.05, duration: 0.3 }}
                     >
-                      <PostItem post={post} onLike={handleLike} onDelete={handleDelete} onEdit={handleEdit} />
+                      <PostItem 
+                        post={post} 
+                        onLike={handleLike} 
+                        onDelete={handleDelete} 
+                        onEdit={handleEdit}
+                      />
                     </motion.div>
                   ))}
                 </div>
