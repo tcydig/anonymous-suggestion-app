@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Heart, Trash2, Pencil, Check, X } from "lucide-react"
-import { formatDistanceToNow } from "date-fns"
+import { formatDistanceToNow, parseISO } from "date-fns"
 import { ja } from "date-fns/locale"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Badge } from "@/components/ui/badge"
@@ -23,7 +23,7 @@ import {
 type Post = {
   id: string
   content: string
-  timestamp: Date
+  timestamp: string
   likes: number
   category: string
 }
@@ -31,7 +31,7 @@ type Post = {
 // Update the PostItemProps interface
 interface PostItemProps {
   post: Post
-  onLike: (id: string) => void
+  onLike: (id: string) => Promise<Post>
   onDelete: (id: string) => void
   onEdit: (id: string, newContent: string) => void
 }
@@ -60,10 +60,16 @@ export default function PostItem({ post, onLike, onDelete, onEdit }: PostItemPro
   const [editedContent, setEditedContent] = useState(post.content)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
-  const handleLike = () => {
-    if (!liked) {
-      onLike(post.id)
-      setLiked(true)
+  const handleLike = async () => {
+    try {
+      const updatedPost = await onLike(post.id);
+      if (updatedPost) {
+        // 投稿データを更新
+        post = updatedPost;
+      }
+      setLiked(true);
+    } catch (error) {
+      console.error('いいねエラー:', error);
     }
   }
 
@@ -136,7 +142,7 @@ export default function PostItem({ post, onLike, onDelete, onEdit }: PostItemPro
 
         <CardFooter className="flex justify-between items-center border-t border-purple-100 py-3 bg-gradient-to-r from-purple-50/50 to-pink-50/50">
           <span className="text-sm text-gray-500">
-            {formatDistanceToNow(post.timestamp, { addSuffix: true, locale: ja })}
+            {formatDistanceToNow(parseISO(post.timestamp), { addSuffix: true, locale: ja })}
           </span>
 
           <div className="flex items-center gap-3">

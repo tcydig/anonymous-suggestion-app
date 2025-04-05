@@ -2,7 +2,7 @@
 export type Post = {
   id: string;
   content: string;
-  timestamp: Date;
+  timestamp: string;
   likes: number;
   category: string;
 };

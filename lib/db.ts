@@ -12,7 +12,7 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS suggestions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     content TEXT NOT NULL,
-    category TEXT DEFAULT '提案',
+    category TEXT DEFAULT '改善提案',
     likes INTEGER DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )
