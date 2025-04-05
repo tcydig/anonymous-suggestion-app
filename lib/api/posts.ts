@@ -143,3 +143,13 @@ export async function likePost(id: string): Promise<Post> {
   }
   return response.json();
 }
+
+// Get total post count
+export async function getPostCount(): Promise<number> {
+  const response = await fetch("/api/posts/count");
+  if (!response.ok) {
+    throw new Error("投稿数の取得に失敗しました");
+  }
+  const data = await response.json();
+  return data.count;
+}
