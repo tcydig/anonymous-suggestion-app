@@ -99,9 +99,17 @@ export default function ListPage() {
     setPosts(updatedPosts)
   }
 
+  const handleDelete = (id: string) => {
+    setPosts(posts.filter((post) => post.id !== id))
+  }
+
+  const handleEdit = (id: string, newContent: string) => {
+    setPosts(posts.map((post) => (post.id === id ? { ...post, content: newContent } : post)))
+  }
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-purple-50 to-pink-50">
-      <div className="container mx-auto max-w-2xl py-8 px-4">
+      <div className="container mx-auto max-w-7xl py-8 px-4">
         <motion.div
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -115,7 +123,7 @@ export default function ListPage() {
         </motion.div>
 
         {/* Filters */}
-        <Card className="mb-6 border-0 shadow-md">
+        <Card className="mb-8 border-0 shadow-md">
           <CardContent className="p-4">
             <div className="flex flex-col sm:flex-row gap-4 items-center">
               <div className="flex items-center gap-2 w-full sm:w-1/2">
@@ -129,7 +137,7 @@ export default function ListPage() {
                     <SelectItem value="改善提案">改善提案</SelectItem>
                     <SelectItem value="ぼやき">ぼやき</SelectItem>
                     <SelectItem value="質問">質問</SelectItem>
-                    <SelectItem value="アイデ��">アイデア</SelectItem>
+                    <SelectItem value="アイデア">アイデア</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -152,8 +160,8 @@ export default function ListPage() {
         </Card>
 
         {/* Posts List */}
-        <div className="space-y-4">
-          <div className="flex justify-between items-center mb-4">
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
             <h2 className="text-xl font-semibold text-purple-800">投稿一覧</h2>
             <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 border-0">{filteredPosts.length}件</Badge>
           </div>
@@ -168,16 +176,23 @@ export default function ListPage() {
               </CardContent>
             </Card>
           ) : (
-            filteredPosts.map((post, index) => (
-              <motion.div
-                key={post.id}
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: index * 0.05, duration: 0.3 }}
-              >
-                <PostItem post={post} onLike={handleLike} />
-              </motion.div>
-            ))
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredPosts.map((post, index) => (
+                <motion.div
+                  key={post.id}
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: index * 0.05, duration: 0.3 }}
+                >
+                  <PostItem 
+                    post={post} 
+                    onLike={handleLike} 
+                    onDelete={handleDelete} 
+                    onEdit={handleEdit}
+                  />
+                </motion.div>
+              ))}
+            </div>
           )}
         </div>
       </div>

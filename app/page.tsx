@@ -37,6 +37,7 @@ export default function Home() {
   const [input, setInput] = useState("")
   const [selectedCategory, setSelectedCategory] = useState(categories[0].name)
   const [isInputFocused, setIsInputFocused] = useState(false)
+  const [visiblePosts, setVisiblePosts] = useState(10)
 
   // Load sample data for demonstration
   useEffect(() => {
@@ -115,9 +116,16 @@ export default function Home() {
   //   )
   // }
 
+  const handleLoadMore = () => {
+    setVisiblePosts((prev) => prev + 10)
+  }
+
+  const displayedPosts = posts.slice(0, visiblePosts)
+  const hasMorePosts = posts.length > visiblePosts
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-purple-50 to-pink-50">
-      <div className="container mx-auto max-w-2xl py-8 px-4">
+      <div className="container mx-auto max-w-7xl py-8 px-4">
         <motion.div
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -156,9 +164,10 @@ export default function Home() {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.3, duration: 0.5 }}
+          className="mb-12"
         >
           <Card
-            className={`mb-8 border-0 shadow-lg transition-all duration-300 ${
+            className={`border-0 shadow-lg transition-all duration-300 ${
               isInputFocused ? "ring-2 ring-purple-300 shadow-purple-200/50" : "hover:shadow-xl"
             }`}
           >
@@ -216,7 +225,7 @@ export default function Home() {
 
         {/* Timeline */}
         <div className="space-y-4">
-          <div className="flex justify-between items-center mb-4">
+          <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold text-purple-800">みんなのつぶやき</h2>
             <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 border-0">新着 {posts.length}件</Badge>
           </div>
@@ -234,17 +243,37 @@ export default function Home() {
                 </Card>
               </motion.div>
             ) : (
-              posts.map((post, index) => (
-                <motion.div
-                  key={post.id}
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  exit={{ y: -20, opacity: 0 }}
-                  transition={{ delay: index * 0.05, duration: 0.3 }}
-                >
-                  <PostItem post={post} onLike={handleLike} onDelete={handleDelete} onEdit={handleEdit} />
-                </motion.div>
-              ))
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {displayedPosts.map((post, index) => (
+                    <motion.div
+                      key={post.id}
+                      initial={{ y: 20, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      exit={{ y: -20, opacity: 0 }}
+                      transition={{ delay: index * 0.05, duration: 0.3 }}
+                    >
+                      <PostItem post={post} onLike={handleLike} onDelete={handleDelete} onEdit={handleEdit} />
+                    </motion.div>
+                  ))}
+                </div>
+                
+                {hasMorePosts && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="flex justify-center mt-8"
+                  >
+                    <Button
+                      onClick={handleLoadMore}
+                      variant="outline"
+                      className="border-purple-200 hover:border-purple-300 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                    >
+                      さらに見る
+                    </Button>
+                  </motion.div>
+                )}
+              </>
             )}
           </AnimatePresence>
         </div>
