@@ -1,6 +1,7 @@
 # 匿名提案アプリ
 
 このアプリは、匿名で提案や意見を投稿できる Web アプリケーションです。Next.js、TypeScript、Tailwind CSS を使用して構築されています。
+![Home画面](/public/lp.png)
 
 ## 技術スタック
 
