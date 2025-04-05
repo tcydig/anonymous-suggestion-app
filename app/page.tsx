@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import confetti from "canvas-confetti"
 import Link from "next/link"
 import { Post, categories } from "@/lib/types"
-import { fetchPosts, createPost, updatePost, deletePost, likePost, getPostCount } from "@/lib/api/posts"
+import { fetchPosts, createPost, updatePost, deletePost, likePost, getPostCount, getLikeCount } from "@/lib/api/posts"
 
 // Remove the reactions array
 // const reactions = ['👍', '❤️', '😂', '😮', '😢', '👏'];
@@ -19,6 +19,7 @@ import { fetchPosts, createPost, updatePost, deletePost, likePost, getPostCount 
 export default function Home() {
   const [posts, setPosts] = useState<Post[]>([])
   const [totalPosts, setTotalPosts] = useState<number>(0)
+  const [totalLikes, setTotalLikes] = useState<number>(0)
   const [hasMore, setHasMore] = useState(false)
   const [input, setInput] = useState("")
   const [selectedCategory, setSelectedCategory] = useState(categories[0].name)
@@ -34,6 +35,8 @@ export default function Home() {
         setPosts(data.suggestions)
         const count = await getPostCount()
         setTotalPosts(count)
+        const likes = await getLikeCount()
+        setTotalLikes(likes)
         setHasMore(data.hasMore)
       } catch (error) {
         console.error("投稿の読み込みに失敗しました:", error)
@@ -146,7 +149,7 @@ export default function Home() {
           </Card>
           <Card className="w-1/2 border-0 shadow-md bg-gradient-to-br from-blue-500/10 to-cyan-500/10 backdrop-blur-sm">
             <CardContent className="p-4 text-center">
-              <p className="text-2xl font-bold text-blue-700">{posts.reduce((sum, post) => sum + post.likes, 0)}</p>
+              <p className="text-2xl font-bold text-blue-700">{totalLikes}</p>
               <p className="text-xs text-gray-600">いいね</p>
             </CardContent>
           </Card>

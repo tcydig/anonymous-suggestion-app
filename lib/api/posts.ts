@@ -153,3 +153,12 @@ export async function getPostCount(): Promise<number> {
   const data = await response.json();
   return data.count;
 }
+
+export async function getLikeCount(): Promise<number> {
+  const response = await fetch("/api/posts/likes/count");
+  if (!response.ok) {
+    throw new Error("いいね数の取得に失敗しました");
+  }
+  const data = await response.json();
+  return data.count;
+}
