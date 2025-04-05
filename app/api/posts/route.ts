@@ -45,12 +45,12 @@ export async function POST(request: Request) {
 
     const result = db
       .prepare("INSERT INTO suggestions (content, category) VALUES (?, ?)")
-      .run(content, category || "提案");
+      .run(content, category || "改善提案");
 
     return NextResponse.json({
       id: result.lastInsertRowid.toString(),
       content,
-      category: category || "提案",
+      category: category || "改善提案",
       likes: 0,
       timestamp: new Date().toISOString(),
     });
@@ -77,7 +77,7 @@ export async function PUT(request: Request) {
       .prepare(
         "UPDATE suggestions SET content = ?, category = ? WHERE id = ? RETURNING *"
       )
-      .get(content, category || "提案", id) as Suggestion;
+      .get(content, category || "改善提案", id) as Suggestion;
 
     if (!result) {
       return NextResponse.json(
