@@ -90,6 +90,7 @@ export default function Home() {
     try {
       await deletePost(id)
       setPosts(posts.filter((post) => post.id !== id))
+      setTotalPosts(prev => prev - 1)
     } catch (error) {
       console.error("Failed to delete post:", error)
     }
