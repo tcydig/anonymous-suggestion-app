@@ -1,4 +1,13 @@
 import { Post } from "../types";
+import db from "../db";
+
+interface Suggestion {
+  id: number;
+  content: string;
+  category: string;
+  likes: number;
+  created_at: string;
+}
 
 // Mock data
 const mockPosts: Post[] = [
@@ -52,26 +61,33 @@ const mockPosts: Post[] = [
 
 // Fetch all posts
 export async function fetchPosts(): Promise<Post[]> {
-  // In a real application, this would be an API call
-  // For now, we'll simulate a network delay
-  await new Promise((resolve) => setTimeout(resolve, 500));
-  return mockPosts;
+  const response = await fetch("/api/posts");
+  if (!response.ok) {
+    throw new Error("投稿の取得に失敗しました");
+  }
+  return response.json();
 }
 
 // Create a new post
-export async function createPost(
-  post: Omit<Post, "id" | "timestamp" | "likes">
-): Promise<Post> {
-  const newPost: Post = {
-    id: Date.now().toString(),
-    timestamp: new Date(),
-    likes: 0,
-    ...post,
-  };
+export async function createPost({
+  content,
+  category = "提案",
+}: {
+  content: string;
+  category?: string;
+}): Promise<Post> {
+  const response = await fetch("/api/posts", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ content, category }),
+  });
 
-  // In a real application, this would be an API call
-  await new Promise((resolve) => setTimeout(resolve, 300));
-  return newPost;
+  if (!response.ok) {
+    throw new Error("投稿の作成に失敗しました");
+  }
+  return response.json();
 }
 
 // Update a post
@@ -94,11 +110,12 @@ export async function deletePost(id: string): Promise<void> {
 
 // Like a post
 export async function likePost(id: string): Promise<Post> {
-  // In a real application, this would be an API call
-  await new Promise((resolve) => setTimeout(resolve, 300));
-  const post = mockPosts.find((p) => p.id === id);
-  if (!post) {
-    throw new Error("Post not found");
+  const response = await fetch(`/api/posts/${id}/like`, {
+    method: "POST",
+  });
+
+  if (!response.ok) {
+    throw new Error("いいねの処理に失敗しました");
   }
-  return { ...post, likes: post.likes + 1 };
+  return response.json();
 }
