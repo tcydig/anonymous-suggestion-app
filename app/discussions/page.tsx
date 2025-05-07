@@ -9,9 +9,8 @@ import { MessageSquare, SlidersHorizontal, Clock, AlertCircle } from "lucide-rea
 import { formatDistanceToNow } from "date-fns"
 import { ja } from "date-fns/locale"
 import { Label } from "@/components/ui/label"
-
-// ディスカッションの進捗ステータス
-type ProgressStatus = "未対応" | "対応中" | "完了" | "保留" | "取り消し"
+import { useRouter } from "next/navigation"
+import { sampleDiscussions, ProgressStatus } from "../lib/discussion-data"
 
 // ディスカッションの型定義
 type Discussion = {
@@ -34,13 +33,13 @@ interface DiscussionsResponse {
 // ステータスに応じた色とアイコンを取得する関数
 const getStatusStyles = (status: ProgressStatus) => {
   switch (status) {
-    case "完了":
+    case "解決済み":
       return {
         bgColor: "bg-green-100",
         textColor: "text-green-700",
         borderColor: "border-green-200",
         badgeColor: "bg-green-500",
-        label: "完了"
+        label: "解決済み"
       }
     case "対応中":
       return {
@@ -57,14 +56,6 @@ const getStatusStyles = (status: ProgressStatus) => {
         borderColor: "border-amber-200",
         badgeColor: "bg-amber-500",
         label: "未対応"
-      }
-    case "保留":
-      return {
-        bgColor: "bg-gray-100",
-        textColor: "text-gray-700",
-        borderColor: "border-gray-200",
-        badgeColor: "bg-gray-500",
-        label: "保留"
       }
     case "取り消し":
       return {
@@ -86,6 +77,7 @@ const getStatusStyles = (status: ProgressStatus) => {
 }
 
 export default function DiscussionsPage() {
+  const router = useRouter()
   const [discussions, setDiscussions] = useState<Discussion[]>([])
   const [filteredDiscussions, setFilteredDiscussions] = useState<Discussion[]>([])
   const [statusFilter, setStatusFilter] = useState<string>("all")
@@ -95,23 +87,33 @@ export default function DiscussionsPage() {
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(false)
 
-  // APIからデータを取得
+  // モックデータからデータを取得
   const fetchDiscussions = async () => {
     try {
       setLoading(true)
-      const response = await fetch(
-        `/api/discussions?page=${page}&limit=10&status=${statusFilter !== "all" ? statusFilter : ""}&sortBy=created_at&sortOrder=${sortOrder === "newest" ? "desc" : "asc"}`
-      )
-      const data: DiscussionsResponse = await response.json()
+      // モックデータをAPIレスポンスの形式に変換
+      const mockData: DiscussionsResponse = {
+        discussions: sampleDiscussions.map(d => ({
+          id: d.id,
+          title: d.title,
+          original_content: d.content,
+          original_category: d.category,
+          status: d.status,
+          created_at: d.createdAt.toISOString(),
+          updated_at: d.updatedAt.toISOString()
+        })),
+        total: sampleDiscussions.length,
+        hasMore: false
+      }
 
       if (page === 1) {
-        setDiscussions(data.discussions)
-        setFilteredDiscussions(data.discussions)
+        setDiscussions(mockData.discussions)
+        setFilteredDiscussions(mockData.discussions)
       } else {
-        setDiscussions(prev => [...prev, ...data.discussions])
-        setFilteredDiscussions(prev => [...prev, ...data.discussions])
+        setDiscussions(prev => [...prev, ...mockData.discussions])
+        setFilteredDiscussions(prev => [...prev, ...mockData.discussions])
       }
-      setHasMore(data.hasMore)
+      setHasMore(mockData.hasMore)
       setError(null)
     } catch (err) {
       setError("ディスカッションの取得に失敗しました")
@@ -131,6 +133,10 @@ export default function DiscussionsPage() {
   const loadMore = () => {
     setPage(prev => prev + 1)
     fetchDiscussions()
+  }
+
+  const handleDiscussionClick = (discussionId: string) => {
+    router.push(`/discussions/${discussionId}`)
   }
 
   return (
@@ -166,8 +172,7 @@ export default function DiscussionsPage() {
                       <SelectItem value="all">すべて</SelectItem>
                       <SelectItem value="未対応">未対応</SelectItem>
                       <SelectItem value="対応中">対応中</SelectItem>
-                      <SelectItem value="完了">完了</SelectItem>
-                      <SelectItem value="保留">保留</SelectItem>
+                      <SelectItem value="解決済み">解決済み</SelectItem>
                       <SelectItem value="取り消し">取り消し</SelectItem>
                     </SelectContent>
                   </Select>
@@ -239,7 +244,10 @@ export default function DiscussionsPage() {
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: index * 0.05, duration: 0.3 }}
                   >
-                    <Card className="border-0 shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden">
+                    <Card 
+                      className="border-0 shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden cursor-pointer"
+                      onClick={() => handleDiscussionClick(discussion.id)}
+                    >
                       <div className="flex items-center p-4 border-b border-gray-100">
                         <div className="flex-1">
                           <h3 className="font-medium text-lg text-gray-800">{discussion.title}</h3>
