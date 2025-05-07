@@ -134,6 +134,7 @@ export async function POST(request: Request) {
       );
     }
 
+    const discussionId = crypto.randomUUID();
     const result = db
       .prepare(
         `INSERT INTO discussions (
@@ -147,7 +148,7 @@ export async function POST(request: Request) {
         ) VALUES (?, ?, ?, ?, ?, ?, ?)`
       )
       .run(
-        crypto.randomUUID(),
+        discussionId,
         originalPostId,
         title,
         "open",
@@ -158,12 +159,16 @@ export async function POST(request: Request) {
 
     const newDiscussion = db
       .prepare(
-        `SELECT d.*, p.content as original_content, p.category as original_category
+        `SELECT d.*, s.content as original_content, s.category as original_category
          FROM discussions d
-         JOIN posts p ON d.original_post_id = p.id
+         JOIN suggestions s ON d.original_post_id = s.id
          WHERE d.id = ?`
       )
-      .get(result.lastInsertRowid) as Discussion;
+      .get(discussionId) as Discussion;
+
+    if (!newDiscussion) {
+      throw new Error("Failed to retrieve created discussion");
+    }
 
     // タイムスタンプをISO文字列に変換し、ステータスを日本語に変換
     const formattedDiscussion = {
