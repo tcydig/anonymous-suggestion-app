@@ -34,21 +34,19 @@ export async function GET(
 }
 
 // ディスカッションの更新
-export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(request: Request, params: Promise<{ id: string }>) {
   try {
+    const { id } = await params;
     const body = await request.json();
-    const { status, title } = body;
+    const { status, title, free_space_content } = body;
 
     const result = db
       .prepare(
         `UPDATE discussions
-       SET status = ?, title = ?, updated_at = CURRENT_TIMESTAMP
+       SET status = ?, title = ?, free_space_content = ?, updated_at = CURRENT_TIMESTAMP
        WHERE id = ?`
       )
-      .run(status, title, params.id);
+      .run(status, title, free_space_content, id);
 
     if (result.changes === 0) {
       return NextResponse.json(
@@ -58,8 +56,13 @@ export async function PUT(
     }
 
     const updatedDiscussion = db
-      .prepare("SELECT * FROM discussions WHERE id = ?")
-      .get(params.id);
+      .prepare(
+        `SELECT d.*, s.content as original_content, s.category as original_category
+         FROM discussions d
+         LEFT JOIN suggestions s ON d.original_post_id = s.id
+         WHERE d.id = ?`
+      )
+      .get(id);
 
     return NextResponse.json(updatedDiscussion);
   } catch (error) {

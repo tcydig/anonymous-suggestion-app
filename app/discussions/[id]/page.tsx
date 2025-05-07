@@ -14,8 +14,31 @@ import { ArrowLeft, Send, Clock, MessageSquare, AlertCircle, ChevronDown, User }
 import { formatDistanceToNow, format } from "date-fns"
 import { ja } from "date-fns/locale"
 import Link from "next/link"
-import { sampleDiscussions, getStatusStyles, type Discussion, type ProgressStatus } from "../../lib/discussion-data"
+import { getStatusStyles, type ProgressStatus } from "../../lib/discussion-data"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+
+// ステータスの英語エイリアスと日本語表示のマッピング
+const STATUS_MAPPING = {
+  open: "未対応",
+  in_progress: "対応中",
+  resolved: "解決済み",
+  closed: "取り消し",
+} as const;
+
+type StatusAlias = keyof typeof STATUS_MAPPING;
+
+// 英語のステータスを日本語に変換する関数
+const getStatusLabel = (status: StatusAlias): ProgressStatus => {
+  return STATUS_MAPPING[status] as ProgressStatus;
+};
+
+// 日本語からステータスの英語エイリアスに変換する関数
+const getStatusAlias = (label: ProgressStatus): StatusAlias => {
+  const entry = Object.entries(STATUS_MAPPING).find(
+    ([_, value]) => value === label
+  );
+  return entry ? (entry[0] as StatusAlias) : "open";
+};
 
 // タイムラインアイテムの型定義
 type TimelineItem = {
@@ -25,121 +48,16 @@ type TimelineItem = {
   type: "comment" | "status-change" | "note"
 }
 
-// サンプルのタイムラインデータ
-const getSampleTimelineItems = (discussionId: string): TimelineItem[] => {
-  switch (discussionId) {
-    case "1":
-      return [
-        {
-          id: "t1-1",
-          content: "このディスカッションを「対応中」に設定しました。",
-          timestamp: new Date(Date.now() - 3600000 * 24 * 3), // 3日前
-          type: "status-change",
-        },
-        {
-          id: "t1-2",
-          content:
-            "受付システムの問題点をリストアップしました。主に以下の点が挙げられています：\n1. 操作が複雑で直感的でない\n2. 処理速度が遅い\n3. エラーメッセージがわかりにくい",
-          timestamp: new Date(Date.now() - 3600000 * 24 * 2), // 2日前
-          type: "comment",
-        },
-        {
-          id: "t1-3",
-          content: "IT部門に相談したところ、次回のアップデートで改善される予定とのことです。",
-          timestamp: new Date(Date.now() - 3600000 * 24), // 1日前
-          type: "note",
-        },
-        {
-          id: "t1-4",
-          content: "アップデートの具体的な日程は来週発表されるそうです。それまでは現行システムを使用してください。",
-          timestamp: new Date(Date.now() - 3600000 * 12), // 12時間前
-          type: "comment",
-        },
-      ]
-    case "2":
-      return [
-        {
-          id: "t2-1",
-          content: "このディスカッションを「対応中」に設定しました。",
-          timestamp: new Date(Date.now() - 3600000 * 24 * 5), // 5日前
-          type: "status-change",
-        },
-        {
-          id: "t2-2",
-          content: "業者に連絡して修理を依頼しました。来週の火曜日に来る予定です。",
-          timestamp: new Date(Date.now() - 3600000 * 24 * 4), // 4日前
-          type: "comment",
-        },
-        {
-          id: "t2-3",
-          content: "修理費用が高額なため、新しいマシンの購入を検討しています。",
-          timestamp: new Date(Date.now() - 3600000 * 24 * 3), // 3日前
-          type: "note",
-        },
-        {
-          id: "t2-4",
-          content: "新しいコーヒーマシンを発注しました。来週末に届く予定です。",
-          timestamp: new Date(Date.now() - 3600000 * 24 * 2), // 2日前
-          type: "comment",
-        },
-        {
-          id: "t2-5",
-          content: "このディスカッションを「対応済み」に設定しました。",
-          timestamp: new Date(Date.now() - 3600000 * 24 * 2), // 2日前
-          type: "status-change",
-        },
-      ]
-    case "3":
-      return [
-        {
-          id: "t3-1",
-          content: "このディスカッションを「対応中」に設定しました。",
-          timestamp: new Date(Date.now() - 3600000 * 24 * 7), // 7日前
-          type: "status-change",
-        },
-        {
-          id: "t3-2",
-          content: "マニュアル作成を担当します。来週中に完成させる予定です。",
-          timestamp: new Date(Date.now() - 3600000 * 24 * 6), // 6日前
-          type: "comment",
-        },
-        {
-          id: "t3-3",
-          content: "人手不足のため、マニュアル作成が遅れています。もう少しお待ちください。",
-          timestamp: new Date(Date.now() - 3600000 * 24 * 4), // 4日前
-          type: "note",
-        },
-        {
-          id: "t3-4",
-          content: "このディスカッションを「保留」に設定しました。",
-          timestamp: new Date(Date.now() - 3600000 * 24 * 4), // 4日前
-          type: "status-change",
-        },
-      ]
-    case "4":
-      return [
-        {
-          id: "t4-1",
-          content: "このディスカッションを「対応中」に設定しました。",
-          timestamp: new Date(Date.now() - 3600000 * 24 * 10), // 10日前
-          type: "status-change",
-        },
-        {
-          id: "t4-2",
-          content: "予算の関係で今期は難しいかもしれません。次期の予算で検討します。",
-          timestamp: new Date(Date.now() - 3600000 * 24 * 9), // 9日前
-          type: "comment",
-        },
-        {
-          id: "t4-3",
-          content: "このディスカッションを「取り下げ」に設定しました。",
-          timestamp: new Date(Date.now() - 3600000 * 24 * 9), // 9日前
-          type: "status-change",
-        },
-      ]
-    default:
-      return []
-  }
+// ディスカッションの型定義
+interface Discussion {
+  id: string
+  title: string
+  status: StatusAlias
+  original_content: string
+  original_category: string
+  created_at: string
+  updated_at: string
+  free_space_content: string | null
 }
 
 // タイムラインアイテムの背景色を取得する関数
@@ -169,69 +87,157 @@ export default function DiscussionDetailPage() {
   const [newStatus, setNewStatus] = useState<ProgressStatus | null>(null)
 
   useEffect(() => {
-    // ディスカッションデータの取得
-    const foundDiscussion = sampleDiscussions.find((d) => d.id === discussionId)
-    if (foundDiscussion) {
-      setDiscussion(foundDiscussion)
+    const fetchData = async () => {
+      try {
+        // ディスカッションデータの取得
+        const discussionResponse = await fetch(`/api/discussions/${discussionId}`)
+        if (!discussionResponse.ok) {
+          throw new Error('Failed to fetch discussion')
+        }
+        const discussionData = await discussionResponse.json()
+        setDiscussion(discussionData)
+
+        // タイムラインデータの取得
+        const timelineResponse = await fetch(`/api/discussions/${discussionId}/timeline`)
+        if (!timelineResponse.ok) {
+          throw new Error('Failed to fetch timeline')
+        }
+        const timelineData = await timelineResponse.json()
+        
+        // タイムラインデータを変換
+        const formattedTimelineItems = timelineData.map((item: any) => ({
+          id: item.id,
+          content: item.content,
+          timestamp: new Date(item.created_at),
+          type: item.type || "comment"
+        }))
+        
+        // 日付の新しい順にソート
+        formattedTimelineItems.sort((a: TimelineItem, b: TimelineItem) => 
+          b.timestamp.getTime() - a.timestamp.getTime()
+        )
+        setTimelineItems(formattedTimelineItems)
+
+        setIsLoading(false)
+      } catch (error) {
+        console.error('Error fetching data:', error)
+        setIsLoading(false)
+      }
     }
 
-    // タイムラインデータの取得
-    const timelineData = getSampleTimelineItems(discussionId)
-    // 日付の新しい順にソート
-    timelineData.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
-    setTimelineItems(timelineData)
-
-    setIsLoading(false)
+    fetchData()
   }, [discussionId])
 
-  const handleCommentSubmit = (e: React.FormEvent) => {
+  const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (comment.trim()) {
-      const newComment: TimelineItem = {
-        id: `new-${Date.now()}`,
-        content: comment,
-        timestamp: new Date(),
-        type: "comment",
-      }
+      try {
+        const response = await fetch(`/api/discussions/${discussionId}/timeline`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ content: comment }),
+        })
 
-      // 新しいコメントを配列の先頭に追加
-      setTimelineItems([newComment, ...timelineItems])
-      setComment("")
+        if (!response.ok) {
+          throw new Error('Failed to post comment')
+        }
+
+        const newEntry = await response.json()
+        const newComment: TimelineItem = {
+          id: newEntry.id,
+          content: newEntry.content,
+          timestamp: new Date(newEntry.created_at),
+          type: "comment",
+        }
+
+        // 新しいコメントを配列の先頭に追加
+        setTimelineItems([newComment, ...timelineItems])
+        setComment("")
+      } catch (error) {
+        console.error('Error posting comment:', error)
+      }
     }
   }
 
   const handleStatusChange = (status: ProgressStatus) => {
-    if (!discussion || status === discussion.status) return
+    if (!discussion || status === getStatusLabel(discussion.status)) return
 
     setNewStatus(status)
     setShowStatusConfirm(true)
   }
 
-  const confirmStatusChange = () => {
+  const confirmStatusChange = async () => {
     if (!discussion || !newStatus) return
 
-    // ディスカッションのステータスを更新
-    const updatedDiscussion = { ...discussion, status: newStatus, updatedAt: new Date() }
-    setDiscussion(updatedDiscussion)
+    try {
+      const response = await fetch(`/api/discussions/${discussionId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          status: getStatusAlias(newStatus),
+          title: discussion.title 
+        }),
+      })
 
-    // タイムラインに追加
-    const statusChangeItem: TimelineItem = {
-      id: `status-${Date.now()}`,
-      content: `このディスカッションを「${newStatus}」に設定しました。`,
-      timestamp: new Date(),
-      type: "status-change",
+      if (!response.ok) {
+        throw new Error('Failed to update status')
+      }
+
+      const updatedDiscussion = await response.json()
+      setDiscussion(updatedDiscussion)
+
+      // タイムラインに追加
+      const statusChangeItem: TimelineItem = {
+        id: `status-${Date.now()}`,
+        content: `このディスカッションを「${newStatus}」に設定しました。`,
+        timestamp: new Date(),
+        type: "status-change",
+      }
+
+      // 新しいステータス変更を配列の先頭に追加
+      setTimelineItems([statusChangeItem, ...timelineItems])
+      setShowStatusConfirm(false)
+      setNewStatus(null)
+    } catch (error) {
+      console.error('Error updating status:', error)
     }
-
-    // 新しいステータス変更を配列の先頭に追加
-    setTimelineItems([statusChangeItem, ...timelineItems])
-    setShowStatusConfirm(false)
-    setNewStatus(null)
   }
 
   const cancelStatusChange = () => {
     setShowStatusConfirm(false)
     setNewStatus(null)
+  }
+
+  const handleDecisionSave = async () => {
+    if (!discussion) return
+
+    try {
+      const response = await fetch(`/api/discussions/${discussionId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          status: discussion.status,
+          title: discussion.title,
+          free_space_content: decisionContent 
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to save decision')
+      }
+
+      const updatedDiscussion = await response.json()
+      setDiscussion(updatedDiscussion)
+    } catch (error) {
+      console.error('Error saving decision:', error)
+    }
   }
 
   if (isLoading) {
@@ -258,7 +264,7 @@ export default function DiscussionDetailPage() {
     )
   }
 
-  const statusStyles = getStatusStyles(discussion.status)
+  const statusStyles = getStatusStyles(getStatusLabel(discussion.status))
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-purple-50 to-pink-50">
@@ -288,36 +294,36 @@ export default function DiscussionDetailPage() {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Badge
-                      className={`${statusStyles.badgeColor} border-0 text-white cursor-pointer flex items-center gap-1 hover:opacity-90 transition-opacity`}
+                      className={`${getStatusStyles(getStatusLabel(discussion.status)).badgeColor} border-0 text-white cursor-pointer flex items-center gap-1 hover:opacity-90 transition-opacity`}
                     >
-                      {discussion.status}
+                      {getStatusLabel(discussion.status)}
                       <ChevronDown className="h-3 w-3 ml-1" />
                     </Badge>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem
-                      className={discussion.status === "解決済み" ? "bg-green-50 font-medium" : ""}
+                      className={discussion.status === "resolved" ? "bg-green-50 font-medium" : ""}
                       onClick={() => handleStatusChange("解決済み")}
                     >
                       <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
                       解決済み
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      className={discussion.status === "未対応" ? "bg-amber-50 font-medium" : ""}
+                      className={discussion.status === "open" ? "bg-amber-50 font-medium" : ""}
                       onClick={() => handleStatusChange("未対応")}
                     >
                       <div className="w-2 h-2 rounded-full bg-amber-500 mr-2"></div>
                       未対応
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      className={discussion.status === "対応中" ? "bg-blue-50 font-medium" : ""}
+                      className={discussion.status === "in_progress" ? "bg-blue-50 font-medium" : ""}
                       onClick={() => handleStatusChange("対応中")}
                     >
                       <div className="w-2 h-2 rounded-full bg-blue-500 mr-2"></div>
                       対応中
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      className={discussion.status === "取り消し" ? "bg-gray-50 font-medium" : ""}
+                      className={discussion.status === "closed" ? "bg-gray-50 font-medium" : ""}
                       onClick={() => handleStatusChange("取り消し")}
                     >
                       <div className="w-2 h-2 rounded-full bg-gray-500 mr-2"></div>
@@ -328,16 +334,16 @@ export default function DiscussionDetailPage() {
               </div>
               <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
                 <Badge variant="outline" className="text-xs font-normal">
-                  {discussion.category}
+                  {discussion.original_category}
                 </Badge>
                 <span className="flex items-center gap-1">
                   <Clock className="h-3 w-3" />
-                  {formatDistanceToNow(discussion.createdAt, { addSuffix: true, locale: ja })}作成
+                  {formatDistanceToNow(new Date(discussion.created_at), { addSuffix: true, locale: ja })}作成
                 </span>
               </div>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-700 whitespace-pre-line">{discussion.content}</p>
+              <p className="text-gray-700 whitespace-pre-line">{discussion.original_content}</p>
             </CardContent>
           </Card>
         </motion.div>
@@ -352,7 +358,7 @@ export default function DiscussionDetailPage() {
             >
               <h3 className="text-lg font-bold mb-2">ステータスの変更</h3>
               <p className="mb-4">
-                ステータスを「{discussion.status}」から「{newStatus}」に変更しますか？
+                ステータスを「{getStatusLabel(discussion.status)}」から「{newStatus}」に変更しますか？
               </p>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={cancelStatusChange}>
@@ -410,7 +416,7 @@ export default function DiscussionDetailPage() {
                 />
                 <div className="flex justify-end">
                   <Button
-                    onClick={() => alert("決定内容を保存しました")}
+                    onClick={handleDecisionSave}
                     className="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white shadow-md hover:shadow-lg transition-all duration-300"
                   >
                     <svg
