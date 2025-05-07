@@ -8,9 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { MessageSquare, SlidersHorizontal, Clock, AlertCircle } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { ja } from "date-fns/locale"
+import { Label } from "@/components/ui/label"
 
 // ディスカッションの進捗ステータス
-type ProgressStatus = "open" | "in_progress" | "closed"
+type ProgressStatus = "未対応" | "対応中" | "完了" | "保留" | "取り消し"
 
 // ディスカッションの型定義
 type Discussion = {
@@ -33,7 +34,7 @@ interface DiscussionsResponse {
 // ステータスに応じた色とアイコンを取得する関数
 const getStatusStyles = (status: ProgressStatus) => {
   switch (status) {
-    case "closed":
+    case "完了":
       return {
         bgColor: "bg-green-100",
         textColor: "text-green-700",
@@ -41,7 +42,7 @@ const getStatusStyles = (status: ProgressStatus) => {
         badgeColor: "bg-green-500",
         label: "完了"
       }
-    case "in_progress":
+    case "対応中":
       return {
         bgColor: "bg-blue-100",
         textColor: "text-blue-700",
@@ -49,13 +50,37 @@ const getStatusStyles = (status: ProgressStatus) => {
         badgeColor: "bg-blue-500",
         label: "対応中"
       }
-    case "open":
+    case "未対応":
       return {
         bgColor: "bg-amber-100",
         textColor: "text-amber-700",
         borderColor: "border-amber-200",
         badgeColor: "bg-amber-500",
         label: "未対応"
+      }
+    case "保留":
+      return {
+        bgColor: "bg-gray-100",
+        textColor: "text-gray-700",
+        borderColor: "border-gray-200",
+        badgeColor: "bg-gray-500",
+        label: "保留"
+      }
+    case "取り消し":
+      return {
+        bgColor: "bg-red-100",
+        textColor: "text-red-700",
+        borderColor: "border-red-200",
+        badgeColor: "bg-red-500",
+        label: "取り消し"
+      }
+    default:
+      return {
+        bgColor: "bg-gray-100",
+        textColor: "text-gray-700",
+        borderColor: "border-gray-200",
+        badgeColor: "bg-gray-500",
+        label: "不明"
       }
   }
 }
@@ -128,17 +153,25 @@ export default function DiscussionsPage() {
           <CardContent className="p-4">
             <div className="flex flex-col sm:flex-row gap-4 items-center">
               <div className="flex items-center gap-2 w-full sm:w-1/2">
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="ステータスで絞り込む" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">すべてのステータス</SelectItem>
-                    <SelectItem value="open">未対応</SelectItem>
-                    <SelectItem value="in_progress">対応中</SelectItem>
-                    <SelectItem value="closed">完了</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="status">ステータス</Label>
+                  <Select
+                    value={statusFilter}
+                    onValueChange={(value) => setStatusFilter(value)}
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="ステータスを選択" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">すべて</SelectItem>
+                      <SelectItem value="未対応">未対応</SelectItem>
+                      <SelectItem value="対応中">対応中</SelectItem>
+                      <SelectItem value="完了">完了</SelectItem>
+                      <SelectItem value="保留">保留</SelectItem>
+                      <SelectItem value="取り消し">取り消し</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div className="flex items-center gap-2 w-full sm:w-1/2">
@@ -197,7 +230,7 @@ export default function DiscussionsPage() {
             // ディスカッション一覧表示
             <>
               {filteredDiscussions.map((discussion, index) => {
-                const statusStyles = getStatusStyles(discussion.status)
+                const statusStyles = getStatusStyles(discussion.status || "未対応")
 
                 return (
                   <motion.div

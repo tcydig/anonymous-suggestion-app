@@ -6,11 +6,46 @@ interface CountResult {
   total: number;
 }
 
+// ステータスの英語エイリアスと日本語表示のマッピング
+const STATUS_MAPPING = {
+  open: "未対応",
+  in_progress: "対応中",
+  resolved: "解決済み",
+  closed: "取り消し",
+} as const;
+
+type StatusAlias = keyof typeof STATUS_MAPPING;
+
+interface Discussion {
+  id: string;
+  original_post_id: string;
+  title: string;
+  status: StatusAlias;
+  free_space_content: string | null;
+  created_at: string;
+  updated_at: string;
+  original_content: string;
+  original_category: string;
+}
+
 // 現在時刻をJSTで取得する関数
 function getCurrentTimestamp() {
   const now = new Date();
   return now.toISOString();
 }
+
+// ステータスを日本語に変換する関数
+const getStatusLabel = (status: StatusAlias): string => {
+  return STATUS_MAPPING[status] || "不明";
+};
+
+// 日本語からステータスの英語エイリアスに変換する関数
+const getStatusAlias = (label: string): StatusAlias => {
+  const entry = Object.entries(STATUS_MAPPING).find(
+    ([_, value]) => value === label
+  );
+  return entry ? (entry[0] as StatusAlias) : "open";
+};
 
 // ディスカッション一覧の取得
 export async function GET(request: Request) {
@@ -78,9 +113,9 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { originalPostId, status, title } = body;
+    const { originalPostId, title } = body;
 
-    if (!originalPostId || !status || !title) {
+    if (!originalPostId || !title) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -99,35 +134,46 @@ export async function POST(request: Request) {
       );
     }
 
-    const timestamp = getCurrentTimestamp();
     const result = db
       .prepare(
-        `INSERT INTO discussions (id, original_post_id, status, title, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?)`
+        `INSERT INTO discussions (
+          id,
+          original_post_id,
+          title,
+          status,
+          free_space_content,
+          created_at,
+          updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)`
       )
       .run(
         crypto.randomUUID(),
         originalPostId,
-        status,
         title,
-        timestamp,
-        timestamp
+        "open",
+        null,
+        getCurrentTimestamp(),
+        getCurrentTimestamp()
       );
 
     const newDiscussion = db
       .prepare(
-        `
-        SELECT 
-          *,
-          datetime(created_at, '+9 hours') as created_at,
-          datetime(updated_at, '+9 hours') as updated_at
-        FROM discussions 
-        WHERE id = ?
-      `
+        `SELECT d.*, p.content as original_content, p.category as original_category
+         FROM discussions d
+         JOIN posts p ON d.original_post_id = p.id
+         WHERE d.id = ?`
       )
-      .get(result.lastInsertRowid);
+      .get(result.lastInsertRowid) as Discussion;
 
-    return NextResponse.json(newDiscussion);
+    // タイムスタンプをISO文字列に変換し、ステータスを日本語に変換
+    const formattedDiscussion = {
+      ...newDiscussion,
+      created_at: new Date(newDiscussion.created_at).toISOString(),
+      updated_at: new Date(newDiscussion.updated_at).toISOString(),
+      status: getStatusLabel(newDiscussion.status),
+    };
+
+    return NextResponse.json(formattedDiscussion);
   } catch (error) {
     console.error("Failed to create discussion:", error);
     return NextResponse.json(

@@ -20,7 +20,7 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS discussions (
     id TEXT PRIMARY KEY,
     original_post_id INTEGER NOT NULL,
-    status TEXT NOT NULL CHECK(status IN ('open', 'in_progress', 'resolved', 'closed')),
+    status TEXT NOT NULL CHECK(status IN ('open', 'in_progress', 'resolved', 'closed' )),
     title TEXT NOT NULL,
     free_space_content TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
