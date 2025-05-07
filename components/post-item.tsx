@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
-import { Heart, Trash2, Pencil, Check, X } from "lucide-react"
+import { Heart, Trash2, Pencil, Check, X, MessageCircle } from "lucide-react"
 import { formatDistanceToNow, parseISO } from "date-fns"
 import { ja } from "date-fns/locale"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
@@ -18,6 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { CreateDiscussionDialog } from "@/components/create-discussion-dialog"
 
 // Update the Post type definition
 type Post = {
@@ -67,6 +68,7 @@ export default function PostItem({ post, onLike, onDelete, onEdit }: PostItemPro
   const [isEditing, setIsEditing] = useState(false)
   const [editedContent, setEditedContent] = useState(post.content)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [showDiscussionDialog, setShowDiscussionDialog] = useState(false)
 
   const handleLike = async () => {
     try {
@@ -190,6 +192,24 @@ export default function PostItem({ post, onLike, onDelete, onEdit }: PostItemPro
               </Tooltip>
             </TooltipProvider>
 
+            {/* Discussion button */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => setShowDiscussionDialog(true)}
+                    className="text-gray-400 hover:text-purple-500 transition-colors"
+                    disabled={isEditing}
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>ディスカッションを作成</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
             {/* Like button */}
             <TooltipProvider>
               <Tooltip>
@@ -230,6 +250,12 @@ export default function PostItem({ post, onLike, onDelete, onEdit }: PostItemPro
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <CreateDiscussionDialog
+        isOpen={showDiscussionDialog}
+        onClose={() => setShowDiscussionDialog(false)}
+        originalPostId={post.id}
+      />
     </>
   )
 }
