@@ -91,29 +91,25 @@ export default function DiscussionsPage() {
   const fetchDiscussions = async () => {
     try {
       setLoading(true)
-      // モックデータをAPIレスポンスの形式に変換
-      const mockData: DiscussionsResponse = {
-        discussions: sampleDiscussions.map(d => ({
-          id: d.id,
-          title: d.title,
-          original_content: d.content,
-          original_category: d.category,
-          status: d.status,
-          created_at: d.createdAt.toISOString(),
-          updated_at: d.updatedAt.toISOString()
-        })),
-        total: sampleDiscussions.length,
-        hasMore: false
+      // APIからデータを取得
+      const response = await fetch(
+        `/api/discussions?status=${statusFilter !== "all" ? statusFilter : ""}&sortBy=created_at&sortOrder=${sortOrder === "newest" ? "desc" : "asc"}&page=${page}&limit=10`
+      )
+
+      if (!response.ok) {
+        throw new Error("ディスカッションの取得に失敗しました")
       }
 
+      const data = await response.json()
+
       if (page === 1) {
-        setDiscussions(mockData.discussions)
-        setFilteredDiscussions(mockData.discussions)
+        setDiscussions(data.discussions)
+        setFilteredDiscussions(data.discussions)
       } else {
-        setDiscussions(prev => [...prev, ...mockData.discussions])
-        setFilteredDiscussions(prev => [...prev, ...mockData.discussions])
+        setDiscussions(prev => [...prev, ...data.discussions])
+        setFilteredDiscussions(prev => [...prev, ...data.discussions])
       }
-      setHasMore(mockData.hasMore)
+      setHasMore(data.hasMore)
       setError(null)
     } catch (err) {
       setError("ディスカッションの取得に失敗しました")
