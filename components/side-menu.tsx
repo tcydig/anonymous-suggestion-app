@@ -5,7 +5,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { PenSquare, List, HelpCircle, Menu } from "lucide-react"
+import { PenSquare, List, HelpCircle, Menu, MessageCircle } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 
 const menuItems = [
@@ -18,6 +18,11 @@ const menuItems = [
     title: "一覧",
     href: "/list",
     icon: <List className="h-5 w-5" />,
+  },
+  {
+    title: "ディスカッション",
+    href: "/discussions",
+    icon: <MessageCircle className="h-5 w-5" />,
   },
   {
     title: "使い方",
