@@ -91,12 +91,18 @@ export async function GET(request: Request) {
     `;
 
     const [discussions, totalCount] = await Promise.all([
-      db.prepare(query).all(...params),
+      db.prepare(query).all(...params) as Discussion[],
       db.prepare(countQuery).get(...(status ? [status] : [])) as CountResult,
     ]);
 
+    // ステータスを日本語に変換
+    const formattedDiscussions = discussions.map((discussion) => ({
+      ...discussion,
+      status: getStatusLabel(discussion.status),
+    }));
+
     return NextResponse.json({
-      discussions,
+      discussions: formattedDiscussions,
       total: totalCount.total,
       hasMore: totalCount.total > offset + limit,
     });
