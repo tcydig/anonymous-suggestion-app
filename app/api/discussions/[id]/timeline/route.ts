@@ -7,6 +7,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const { id } = await params;
     const entries = db
       .prepare(
         `SELECT *
@@ -14,7 +15,7 @@ export async function GET(
        WHERE discussion_id = ?
        ORDER BY created_at DESC`
       )
-      .all(params.id);
+      .all(id);
 
     return NextResponse.json(entries);
   } catch (error) {

@@ -7,6 +7,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const { id } = await params;
     const discussion = db
       .prepare(
         `SELECT d.*, s.content as original_content, s.category as original_category
@@ -14,7 +15,7 @@ export async function GET(
        LEFT JOIN suggestions s ON d.original_post_id = s.id
        WHERE d.id = ?`
       )
-      .get(params.id);
+      .get(id);
 
     if (!discussion) {
       return NextResponse.json(
@@ -34,9 +35,13 @@ export async function GET(
 }
 
 // ディスカッションの更新
-export async function PUT(request: Request, params: Promise<{ id: string }>) {
+export async function PUT(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
   try {
     const { id } = await params;
+
     const body = await request.json();
     const { status, title, free_space_content } = body;
 
