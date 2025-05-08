@@ -61,17 +61,11 @@ interface Discussion {
 }
 
 // タイムラインアイテムの背景色を取得する関数
-const getTimelineItemStyle = (type: string) => {
-  switch (type) {
-    case "comment":
-      return "bg-white"
-    case "status-change":
-      return "bg-purple-50"
-    case "note":
-      return "bg-blue-50"
-    default:
-      return "bg-white"
+const getTimelineItemStyle = (content: string) => {
+  if (content.match(/このディスカッションを「.*」に設定しました。/)) {
+    return "bg-purple-50"
   }
+  return "bg-white"
 }
 
 export default function DiscussionDetailPage() {
@@ -110,7 +104,7 @@ export default function DiscussionDetailPage() {
           id: item.id,
           content: item.content,
           timestamp: new Date(item.created_at),
-          type: item.type || "comment"
+          type: item.content.match(/このディスカッションを「.*」に設定しました。/) ? "status-change" : "comment"
         }))
         
         // 日付の新しい順にソート
@@ -538,7 +532,7 @@ export default function DiscussionDetailPage() {
                     {/* タイムラインのドット */}
                     <div className="absolute w-4 h-4 bg-purple-500 rounded-full -left-[30px] top-2 border-2 border-white" />
 
-                    <Card className={`border-0 shadow-sm ${getTimelineItemStyle(item.type)}`}>
+                    <Card className={`border-0 shadow-sm ${getTimelineItemStyle(item.content)}`}>
                       <CardContent className="p-4">
                         <div className="flex items-start gap-3">
                           <Avatar className="h-8 w-8 bg-purple-200 text-purple-700">
