@@ -1,6 +1,14 @@
 import { NextResponse } from "next/server";
 import db from "@/lib/db";
 
+interface TimelineEntry {
+  id: string;
+  discussion_id: string;
+  content: string;
+  created_at: string | Date;
+  updated_at: string | Date;
+}
+
 // タイムラインの取得
 export async function GET(
   request: Request,
@@ -56,16 +64,34 @@ export async function POST(
       );
     }
 
+    const entryId = crypto.randomUUID();
     const result = db
       .prepare(
         `INSERT INTO timeline_entries (id, discussion_id, content, created_at, updated_at)
        VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
       )
-      .run(crypto.randomUUID(), id, content);
+      .run(entryId, id, content);
 
     const newEntry = db
-      .prepare("SELECT * FROM timeline_entries WHERE id = ?")
-      .get(result.lastInsertRowid);
+      .prepare(
+        `
+        SELECT 
+          id,
+          discussion_id,
+          content,
+          datetime(created_at, '+9 hours') as created_at,
+          datetime(updated_at, '+9 hours') as updated_at
+        FROM timeline_entries 
+        WHERE id = ?`
+      )
+      .get(entryId) as TimelineEntry;
+
+    if (!newEntry) {
+      return NextResponse.json(
+        { error: "Failed to retrieve created entry" },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json(newEntry);
   } catch (error) {
