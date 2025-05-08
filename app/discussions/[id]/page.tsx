@@ -96,6 +96,7 @@ export default function DiscussionDetailPage() {
         }
         const discussionData = await discussionResponse.json()
         setDiscussion(discussionData)
+        setDecisionContent(discussionData.free_space_content || "")
 
         // タイムラインデータの取得
         const timelineResponse = await fetch(`/api/discussions/${discussionId}/timeline`)
@@ -414,6 +415,12 @@ export default function DiscussionDetailPage() {
                   onChange={(e) => setDecisionContent(e.target.value)}
                   className="min-h-24 border-teal-200 focus:border-teal-300 focus:ring-teal-300 bg-white/80 backdrop-blur-sm rounded-xl text-gray-700 placeholder:text-gray-400"
                 />
+                {decisionContent && (
+                  <div className="mt-4 p-4 bg-teal-50 rounded-lg">
+                    <h4 className="text-sm font-medium text-teal-800 mb-2">現在の決定内容</h4>
+                    <p className="text-gray-700 whitespace-pre-line">{decisionContent}</p>
+                  </div>
+                )}
                 <div className="flex justify-end">
                   <Button
                     onClick={handleDecisionSave}
