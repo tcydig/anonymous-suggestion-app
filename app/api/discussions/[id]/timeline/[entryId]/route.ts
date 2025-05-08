@@ -7,6 +7,7 @@ export async function PUT(
   { params }: { params: { id: string; entryId: string } }
 ) {
   try {
+    const { id, entryId } = await params;
     const body = await request.json();
     const { content } = body;
 
@@ -23,7 +24,7 @@ export async function PUT(
        SET content = ?, updated_at = CURRENT_TIMESTAMP
        WHERE id = ? AND discussion_id = ?`
       )
-      .run(content, params.entryId, params.id);
+      .run(content, entryId, id);
 
     if (result.changes === 0) {
       return NextResponse.json(
@@ -34,7 +35,7 @@ export async function PUT(
 
     const updatedEntry = db
       .prepare("SELECT * FROM timeline_entries WHERE id = ?")
-      .get(params.entryId);
+      .get(entryId);
 
     return NextResponse.json(updatedEntry);
   } catch (error) {
@@ -52,11 +53,12 @@ export async function DELETE(
   { params }: { params: { id: string; entryId: string } }
 ) {
   try {
+    const { id, entryId } = await params;
     const result = db
       .prepare(
         "DELETE FROM timeline_entries WHERE id = ? AND discussion_id = ?"
       )
-      .run(params.entryId, params.id);
+      .run(entryId, id);
 
     if (result.changes === 0) {
       return NextResponse.json(

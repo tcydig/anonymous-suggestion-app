@@ -10,12 +10,22 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { ArrowLeft, Send, Clock, MessageSquare, AlertCircle, ChevronDown, User } from "lucide-react"
+import { ArrowLeft, Send, Clock, MessageSquare, AlertCircle, ChevronDown, User, Trash2 } from "lucide-react"
 import { formatDistanceToNow, format } from "date-fns"
 import { ja } from "date-fns/locale"
 import Link from "next/link"
 import { getStatusStyles, type ProgressStatus } from "../../lib/discussion-data"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 // ステータスの英語エイリアスと日本語表示のマッピング
 const STATUS_MAPPING = {
@@ -79,6 +89,8 @@ export default function DiscussionDetailPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [showStatusConfirm, setShowStatusConfirm] = useState(false)
   const [newStatus, setNewStatus] = useState<ProgressStatus | null>(null)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -247,6 +259,32 @@ export default function DiscussionDetailPage() {
       setDiscussion(updatedDiscussion)
     } catch (error) {
       console.error('Error saving decision:', error)
+    }
+  }
+
+  const handleDeleteTimelineItem = async (itemId: string) => {
+    setItemToDelete(itemId)
+    setShowDeleteConfirm(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!itemToDelete) return
+
+    try {
+      const response = await fetch(`/api/discussions/${discussionId}/timeline/${itemToDelete}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to delete timeline item')
+      }
+
+      // 削除されたアイテムをタイムラインから除外
+      setTimelineItems(timelineItems.filter(item => item.id !== itemToDelete))
+      setShowDeleteConfirm(false)
+      setItemToDelete(null)
+    } catch (error) {
+      console.error('Error deleting timeline item:', error)
     }
   }
 
@@ -543,9 +581,17 @@ export default function DiscussionDetailPage() {
                           <div className="flex-1">
                             <div className="flex justify-between items-center mb-1">
                               <span className="font-medium text-gray-800">匿名ユーザー</span>
-                              <span className="text-xs text-gray-500">
-                                {format(item.timestamp, "yyyy/MM/dd HH:mm")}
-                              </span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-gray-500">
+                                  {format(item.timestamp, "yyyy/MM/dd HH:mm")}
+                                </span>
+                                <button
+                                  onClick={() => handleDeleteTimelineItem(item.id)}
+                                  className="text-gray-400 hover:text-red-500 transition-colors"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </div>
                             </div>
                             <p className="text-gray-700 whitespace-pre-line">{item.content}</p>
                           </div>
@@ -559,6 +605,24 @@ export default function DiscussionDetailPage() {
           </div>
         </motion.div>
       </div>
+
+      {/* 削除確認ダイアログ */}
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>タイムラインアイテムの削除</AlertDialogTitle>
+            <AlertDialogDescription>
+              このタイムラインアイテムを削除してもよろしいですか？この操作は取り消すことができません。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>キャンセル</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
+              削除する
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   )
 }
