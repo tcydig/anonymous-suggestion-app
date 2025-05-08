@@ -83,7 +83,7 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const { id, content, category } = await request.json();
+    const { id, content } = await request.json();
 
     if (!id || !content) {
       return NextResponse.json(
@@ -93,10 +93,8 @@ export async function PUT(request: Request) {
     }
 
     const result = db
-      .prepare(
-        "UPDATE suggestions SET content = ?, category = ? WHERE id = ? RETURNING *"
-      )
-      .get(content, category || "改善提案", id) as Suggestion;
+      .prepare("UPDATE suggestions SET content = ? WHERE id = ? RETURNING *")
+      .get(content, id) as Suggestion;
 
     if (!result) {
       return NextResponse.json(
