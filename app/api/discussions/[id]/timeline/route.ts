@@ -33,6 +33,7 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
+    const { id } = await params;
     const body = await request.json();
     const { content } = body;
 
@@ -46,7 +47,7 @@ export async function POST(
     // ディスカッションの存在確認
     const discussion = db
       .prepare("SELECT id FROM discussions WHERE id = ?")
-      .get(params.id);
+      .get(id);
 
     if (!discussion) {
       return NextResponse.json(
@@ -60,7 +61,7 @@ export async function POST(
         `INSERT INTO timeline_entries (id, discussion_id, content, created_at, updated_at)
        VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
       )
-      .run(crypto.randomUUID(), params.id, content);
+      .run(crypto.randomUUID(), id, content);
 
     const newEntry = db
       .prepare("SELECT * FROM timeline_entries WHERE id = ?")
