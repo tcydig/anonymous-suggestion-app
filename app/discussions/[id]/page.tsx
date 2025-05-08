@@ -192,11 +192,26 @@ export default function DiscussionDetailPage() {
       const updatedDiscussion = await response.json()
       setDiscussion(updatedDiscussion)
 
-      // タイムラインに追加
+      // タイムラインエントリーを追加
+      const timelineResponse = await fetch(`/api/discussions/${discussionId}/timeline`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          content: `このディスカッションを「${newStatus}」に設定しました。`
+        }),
+      });
+
+      if (!timelineResponse.ok) {
+        throw new Error('Failed to add timeline entry');
+      }
+
+      const newTimelineEntry = await timelineResponse.json();
       const statusChangeItem: TimelineItem = {
-        id: `status-${Date.now()}`,
-        content: `このディスカッションを「${newStatus}」に設定しました。`,
-        timestamp: new Date(),
+        id: newTimelineEntry.id,
+        content: newTimelineEntry.content,
+        timestamp: new Date(newTimelineEntry.created_at),
         type: "status-change",
       }
 
