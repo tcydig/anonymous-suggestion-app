@@ -73,7 +73,7 @@ export async function GET(request: Request) {
     const params: any[] = [];
     if (status) {
       query += " WHERE d.status = ?";
-      params.push(status);
+      params.push(getStatusAlias(status));
     }
 
     // ソート
@@ -92,7 +92,9 @@ export async function GET(request: Request) {
 
     const [discussions, totalCount] = await Promise.all([
       db.prepare(query).all(...params) as Discussion[],
-      db.prepare(countQuery).get(...(status ? [status] : [])) as CountResult,
+      db
+        .prepare(countQuery)
+        .get(...(status ? [getStatusAlias(status)] : [])) as CountResult,
     ]);
 
     // ステータスを日本語に変換
