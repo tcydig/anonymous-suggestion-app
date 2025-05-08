@@ -7,7 +7,7 @@ export async function PUT(
   { params }: { params: { id: string; entryId: string } }
 ) {
   try {
-    const { id, entryId } = await params;
+    const { id, entryId } = params;
     const body = await request.json();
     const { content } = body;
 
@@ -34,7 +34,16 @@ export async function PUT(
     }
 
     const updatedEntry = db
-      .prepare("SELECT * FROM timeline_entries WHERE id = ?")
+      .prepare(
+        `SELECT 
+          id,
+          discussion_id,
+          content,
+          datetime(created_at, '+9 hours') as created_at,
+          datetime(updated_at, '+9 hours') as updated_at
+        FROM timeline_entries 
+        WHERE id = ?`
+      )
       .get(entryId);
 
     return NextResponse.json(updatedEntry);

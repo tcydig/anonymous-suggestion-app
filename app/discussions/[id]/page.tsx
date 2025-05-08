@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { ArrowLeft, Send, Clock, MessageSquare, AlertCircle, ChevronDown, User, Trash2 } from "lucide-react"
+import { ArrowLeft, Send, Clock, MessageSquare, AlertCircle, ChevronDown, User, Trash2, Check, X, Pencil } from "lucide-react"
 import { formatDistanceToNow, format } from "date-fns"
 import { ja } from "date-fns/locale"
 import Link from "next/link"
@@ -91,6 +91,8 @@ export default function DiscussionDetailPage() {
   const [newStatus, setNewStatus] = useState<ProgressStatus | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [itemToDelete, setItemToDelete] = useState<string | null>(null)
+  const [editingItemId, setEditingItemId] = useState<string | null>(null)
+  const [editingContent, setEditingContent] = useState("")
 
   useEffect(() => {
     const fetchData = async () => {
@@ -286,6 +288,48 @@ export default function DiscussionDetailPage() {
     } catch (error) {
       console.error('Error deleting timeline item:', error)
     }
+  }
+
+  const handleEditTimelineItem = (item: TimelineItem) => {
+    setEditingItemId(item.id)
+    setEditingContent(item.content)
+  }
+
+  const handleUpdateTimelineItem = async (itemId: string) => {
+    try {
+      const response = await fetch(`/api/discussions/${discussionId}/timeline/${itemId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content: editingContent }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to update timeline item')
+      }
+
+      const updatedEntry = await response.json()
+      const updatedItem: TimelineItem = {
+        id: updatedEntry.id,
+        content: updatedEntry.content,
+        timestamp: new Date(updatedEntry.updated_at),
+        type: updatedEntry.content.match(/このディスカッションを「.*」に設定しました。/) ? "status-change" : "comment"
+      }
+
+      setTimelineItems(timelineItems.map(item => 
+        item.id === itemId ? updatedItem : item
+      ))
+      setEditingItemId(null)
+      setEditingContent("")
+    } catch (error) {
+      console.error('Error updating timeline item:', error)
+    }
+  }
+
+  const cancelEdit = () => {
+    setEditingItemId(null)
+    setEditingContent("")
   }
 
   if (isLoading) {
@@ -572,7 +616,7 @@ export default function DiscussionDetailPage() {
 
                     <Card className={`border-0 shadow-sm ${getTimelineItemStyle(item.content)}`}>
                       <CardContent className="p-4">
-                        <div className="flex items-start gap-3">
+                        <div className="flex gap-3">
                           <Avatar className="h-8 w-8 bg-purple-200 text-purple-700">
                             <AvatarFallback>
                               <User className="h-4 w-4" />
@@ -585,15 +629,48 @@ export default function DiscussionDetailPage() {
                                 <span className="text-xs text-gray-500">
                                   {format(item.timestamp, "yyyy/MM/dd HH:mm")}
                                 </span>
-                                <button
-                                  onClick={() => handleDeleteTimelineItem(item.id)}
-                                  className="text-gray-400 hover:text-red-500 transition-colors"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </button>
+                                {editingItemId === item.id ? (
+                                  <>
+                                    <button
+                                      onClick={() => handleUpdateTimelineItem(item.id)}
+                                      className="text-gray-400 hover:text-green-500 transition-colors"
+                                    >
+                                      <Check className="h-4 w-4" />
+                                    </button>
+                                    <button
+                                      onClick={cancelEdit}
+                                      className="text-gray-400 hover:text-gray-500 transition-colors"
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </button>
+                                  </>
+                                ) : (
+                                  <>
+                                    <button
+                                      onClick={() => handleEditTimelineItem(item)}
+                                      className="text-gray-400 hover:text-purple-500 transition-colors"
+                                    >
+                                      <Pencil className="h-4 w-4" />
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteTimelineItem(item.id)}
+                                      className="text-gray-400 hover:text-red-500 transition-colors"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </button>
+                                  </>
+                                )}
                               </div>
                             </div>
-                            <p className="text-gray-700 whitespace-pre-line">{item.content}</p>
+                            {editingItemId === item.id ? (
+                              <Textarea
+                                value={editingContent}
+                                onChange={(e) => setEditingContent(e.target.value)}
+                                className="min-h-20 border-purple-200 focus:border-purple-300 focus:ring-purple-300 bg-white/80 backdrop-blur-sm rounded-xl text-gray-700 placeholder:text-gray-400"
+                              />
+                            ) : (
+                              <p className="text-gray-700 whitespace-pre-line">{item.content}</p>
+                            )}
                           </div>
                         </div>
                       </CardContent>
