@@ -124,6 +124,33 @@ export default function HowToUsePage() {
               </CardContent>
             </Card>
           </motion.div>
+
+          <motion.div initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.4 }}>
+            <Card className="border-0 shadow-md overflow-hidden">
+              <div className="h-1 w-full bg-gradient-to-r from-orange-400 to-red-500" />
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageCircle className="h-5 w-5 text-orange-600" />
+                  ディスカッション機能
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p>「ディスカッション」機能では、特定のつぶやきについて深く議論を進めることができます：</p>
+                <ul className="list-disc list-inside space-y-2 pl-4">
+                  <li>つぶやいた内容が他のつぶやきに埋もれるのを防ぎます</li>
+                  <li>一つのつぶやきを深堀するために利用し、特定のつぶやきに対してコメントが残せます</li>
+                  <li>ディスカッションに移動したコメントは定例会の時に共有されます</li>
+                  <li>実際話した内容や、対応中の内容などを残すことで透明性を担保します</li>
+                </ul>
+                <div className="bg-orange-50 p-4 rounded-lg border border-orange-100 mt-4">
+                  <p className="text-orange-800 text-sm">
+                    ディスカッション機能を活用することで、より効果的な意見交換と問題解決が可能になります。
+                    重要な提案や議論が必要な内容は、積極的にディスカッションに移動させてください。
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
         </div>
       </div>
     </main>
