@@ -18,7 +18,12 @@ export async function GET(
     const { id } = await params;
     const entries = db
       .prepare(
-        `SELECT *
+        `SELECT 
+          id,
+          discussion_id,
+          content,
+          datetime(created_at, '+9 hours') as created_at,
+          datetime(updated_at, '+9 hours') as updated_at
        FROM timeline_entries
        WHERE discussion_id = ?
        ORDER BY created_at DESC`
