@@ -62,7 +62,10 @@ export function SideMenu() {
                         onClick={() => setOpen(false)}
                         className={cn(
                           "flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:bg-purple-100",
-                          pathname === item.href ? "bg-purple-100 text-purple-700 font-medium" : "text-gray-600",
+                          (item.href === "/" && pathname === "/") || 
+                          (item.href !== "/" && pathname.startsWith(item.href)) 
+                            ? "bg-purple-100 text-purple-700 font-medium" 
+                            : "text-gray-600",
                         )}
                       >
                         {item.icon}
@@ -92,7 +95,10 @@ export function SideMenu() {
                   href={item.href}
                   className={cn(
                     "flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:bg-purple-100",
-                    pathname === item.href ? "bg-purple-100 text-purple-700 font-medium" : "text-gray-600",
+                    (item.href === "/" && pathname === "/") || 
+                    (item.href !== "/" && pathname.startsWith(item.href)) 
+                      ? "bg-purple-100 text-purple-700 font-medium" 
+                      : "text-gray-600",
                   )}
                 >
                   {item.icon}
