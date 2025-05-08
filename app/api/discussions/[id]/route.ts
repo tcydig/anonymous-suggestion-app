@@ -85,19 +85,18 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    const { id } = await params;
     // トランザクションの開始
     db.prepare("BEGIN TRANSACTION").run();
 
     try {
       // タイムラインエントリーの削除
       db.prepare("DELETE FROM timeline_entries WHERE discussion_id = ?").run(
-        params.id
+        id
       );
 
       // ディスカッションの削除
-      const result = db
-        .prepare("DELETE FROM discussions WHERE id = ?")
-        .run(params.id);
+      const result = db.prepare("DELETE FROM discussions WHERE id = ?").run(id);
 
       if (result.changes === 0) {
         db.prepare("ROLLBACK").run();

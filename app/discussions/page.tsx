@@ -5,12 +5,22 @@ import { motion } from "framer-motion"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { MessageSquare, SlidersHorizontal, Clock, AlertCircle } from "lucide-react"
+import { MessageSquare, SlidersHorizontal, Clock, AlertCircle, Trash2 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { ja } from "date-fns/locale"
 import { Label } from "@/components/ui/label"
 import { useRouter } from "next/navigation"
 import { sampleDiscussions, ProgressStatus } from "../lib/discussion-data"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 // ディスカッションの型定義
 type Discussion = {
@@ -86,6 +96,8 @@ export default function DiscussionsPage() {
   const [error, setError] = useState<string | null>(null)
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [discussionToDelete, setDiscussionToDelete] = useState<string | null>(null)
 
   // モックデータからデータを取得
   const fetchDiscussions = async () => {
@@ -133,6 +145,40 @@ export default function DiscussionsPage() {
 
   const handleDiscussionClick = (discussionId: string) => {
     router.push(`/discussions/${discussionId}`)
+  }
+
+  const handleDeleteClick = (e: React.MouseEvent, discussionId: string) => {
+    e.stopPropagation() // クリックイベントの伝播を停止
+    setDiscussionToDelete(discussionId)
+    setShowDeleteConfirm(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!discussionToDelete) return
+
+    try {
+      const response = await fetch(`/api/discussions/${discussionToDelete}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to delete discussion')
+      }
+
+      // 削除されたディスカッションを一覧から除外
+      setDiscussions(prev => prev.filter(d => d.id !== discussionToDelete))
+      setFilteredDiscussions(prev => prev.filter(d => d.id !== discussionToDelete))
+      setShowDeleteConfirm(false)
+      setDiscussionToDelete(null)
+    } catch (error) {
+      console.error('Error deleting discussion:', error)
+      setError('ディスカッションの削除に失敗しました')
+    }
+  }
+
+  const cancelDelete = () => {
+    setShowDeleteConfirm(false)
+    setDiscussionToDelete(null)
   }
 
   return (
@@ -257,9 +303,17 @@ export default function DiscussionsPage() {
                             </span>
                           </div>
                         </div>
-                        <Badge className={`${statusStyles.badgeColor} border-0 text-white`}>
-                          {statusStyles.label}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge className={`${statusStyles.badgeColor} border-0 text-white`}>
+                            {statusStyles.label}
+                          </Badge>
+                          <button
+                            onClick={(e) => handleDeleteClick(e, discussion.id)}
+                            className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
                       </div>
                       <CardContent className="p-4">
                         <p className="text-gray-700 mb-4 line-clamp-2">{discussion.original_content}</p>
@@ -289,6 +343,28 @@ export default function DiscussionsPage() {
             </>
           )}
         </div>
+
+        {/* 削除確認ダイアログ */}
+        <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>ディスカッションの削除</AlertDialogTitle>
+              <AlertDialogDescription>
+                このディスカッションを削除してもよろしいですか？
+                この操作は取り消すことができません。
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={cancelDelete}>キャンセル</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmDelete}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                削除する
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </main>
   )
