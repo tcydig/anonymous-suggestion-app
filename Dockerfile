@@ -9,6 +9,9 @@ COPY . .
 
 RUN npm run build
 
+RUN apk update
+RUN apk add --no-cache sqlite
+
 EXPOSE 5124
 
 CMD ["npm", "start"] 
